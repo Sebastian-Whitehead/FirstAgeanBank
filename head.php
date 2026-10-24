@@ -7,7 +7,9 @@
 <html>
     <head>
         <title><?php
-            if (substr_count($_SERVER['REQUEST_URI'], '/') >= 2) {
+            if (isset($pageTitle)) {
+                echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8');
+            } elseif (substr_count($_SERVER['REQUEST_URI'], '/') >= 2) {
                 $url = ucwords(str_replace("/", " ", $_SERVER['REQUEST_URI']));
                 $str = explode('Index', $url);
                 $url = $str[0];
@@ -16,7 +18,7 @@
                 echo 'First Agean Bank';
             }
         ?></title>
-        <link rel="stylesheet" href="/assets/css/main.css?v=20261024-profile">
+        <link rel="stylesheet" href="/assets/css/main.css?v=20261024-investments-widgets">
         <link rel="icon" href="/assets/png/first-agean-bank.png" type="image/png">
         <script src="https://cdn.jsdelivr.net/npm/js-cookie@rc/dist/js.cookie.min.js"></script>
         <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">

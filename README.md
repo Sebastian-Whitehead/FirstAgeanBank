@@ -10,6 +10,7 @@ This fictional role-play project is intended for local scambaiting and personal 
 ## Features
 * Fake bank account sign up
 * Transfer between accounts
+* Authenticated Investments page with TradingView market widgets
 * Disabled inspect on account information page (still accessible through other pages)
 * Session inactivity timeout (15 minutes)
 * Recent activities

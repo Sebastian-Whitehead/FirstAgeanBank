@@ -20,6 +20,7 @@
                             echo '
                             <li><a href="/accounts">Accounts</a></li>
                             <li><a href="/transfer">Transfer</a></li>
+                            <li><a href="/investments/">Investments</a></li>
                             <li><a href="/activities">Activities</a></li>
                             <li><a href="/includes/logout.inc.php">Logout</a></li>
                             ';

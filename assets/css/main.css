@@ -895,6 +895,116 @@ select {
     color: #176b35;
 }
 
+.investments-page {
+    box-sizing: border-box;
+    width: min(1440px, calc(100% - 40px));
+    margin: 8.5em auto 5em;
+    color: #202020;
+    font-family: 'Roboto', sans-serif;
+}
+
+.investments-header {
+    margin-bottom: 1.5em;
+    padding: 1.8em 2em;
+    border-radius: 14px;
+    background: linear-gradient(120deg, #fff 0%, #eaf2ff 100%);
+    box-shadow: 0 4px 18px #004aad14;
+}
+
+.investments-eyebrow {
+    margin: 0 0 0.4em;
+    color: var(--brand-color);
+    font-size: 0.75em;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.investments-header h1 {
+    margin: 0;
+    color: #173b68;
+    font-family: 'Cormorant', serif;
+    font-size: clamp(2em, 4vw, 2.8em);
+}
+
+.investments-header > p:not(.investments-eyebrow) {
+    margin: 0.6em 0 0;
+    color: #4f5c6d;
+    line-height: 1.55;
+}
+
+.investments-header .investments-disclaimer {
+    padding-top: 0.7em;
+    border-top: 1px solid #d7e2f1;
+    font-size: 0.88em;
+}
+
+.investments-ticker {
+    overflow: hidden;
+    margin-bottom: 1.25em;
+    padding: 0.35em 0.8em;
+    border: 1px solid #e5eaf0;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.investments-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25em;
+    align-items: start;
+}
+
+.investment-card {
+    min-width: 0;
+    overflow: hidden;
+    padding: 1.2em;
+    border: 1px solid #e5eaf0;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 4px 18px #004aad14;
+}
+
+.investment-card--screener {
+    grid-column: 1 / -1;
+}
+
+.investment-card__heading {
+    display: flex;
+    min-height: 3.2em;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1em;
+    margin-bottom: 0.75em;
+}
+
+.investment-card__heading h2 {
+    margin: 0;
+    color: #202020;
+    font-size: 1.3em;
+}
+
+.investment-card__heading > span {
+    color: #68788a;
+    font-size: 0.8em;
+}
+
+.investment-card .tradingview-widget-container,
+.investments-ticker .tradingview-widget-container {
+    width: 100%;
+}
+
+.investments-attribution {
+    margin: 1em 0 0;
+    color: #68788a;
+    font-size: 0.85em;
+    text-align: right;
+}
+
+.investments-attribution a {
+    color: var(--brand-color);
+}
+
 @media (max-width: 680px) {
     .profile-settings {
         margin-top: 7em;
@@ -906,5 +1016,26 @@ select {
 
     .profile-card {
         padding: 1.2em;
+    }
+
+    .investments-page {
+        width: calc(100% - 24px);
+        margin-top: 7.5em;
+    }
+
+    .investments-header {
+        padding: 1.3em;
+    }
+
+    .investments-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .investment-card {
+        padding: 0.9em;
+    }
+
+    .investment-card__heading > span {
+        text-align: right;
     }
 }
