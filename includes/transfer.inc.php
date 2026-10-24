@@ -1,5 +1,6 @@
 <?php
 require 'dbh.inc.php';
+require 'external-db-sync.inc.php';
 session_start();
 require 'inactivity.php';
 
@@ -7,47 +8,6 @@ function redirectTransferError($error)
 {
     header("Location: ../transfer/index.php?error=".$error);
     exit();
-}
-
-function loadTransferHistory($username)
-{
-    if (!preg_match('/^[a-zA-Z0-9]+$/', $username)) {
-        throw new RuntimeException("Invalid username for transaction history.");
-    }
-
-    $path = __DIR__.'/../assets/users/'.$username.'.json';
-    if (!file_exists($path)) {
-        return [$path, null, []];
-    }
-
-    $contents = file_get_contents($path);
-    if ($contents === false) {
-        throw new RuntimeException("Unable to read transaction history.");
-    }
-    $history = json_decode(trim($contents, "\xEF\xBB\xBF"), true);
-    if (!is_array($history)) {
-        throw new RuntimeException("Transaction history contains invalid JSON.");
-    }
-    return [$path, $contents, $history];
-}
-
-function writeTransferHistory($path, $history)
-{
-    $json = json_encode($history, JSON_PRETTY_PRINT);
-    return $json !== false && file_put_contents($path, $json, LOCK_EX) !== false;
-}
-
-function restoreTransferHistory($path, $originalContents)
-{
-    if ($originalContents === null) {
-        if (file_exists($path) && !unlink($path)) {
-            error_log("Transfer rollback failed: unable to remove transaction history file.");
-        }
-        return;
-    }
-    if (file_put_contents($path, $originalContents, LOCK_EX) === false) {
-        error_log("Transfer rollback failed: unable to restore transaction history file.");
-    }
 }
 
 if (!isset($_SESSION['userId']) || !isset($_SESSION['timesince'])) {
@@ -131,14 +91,29 @@ if ((float)$balances[$senderId] < $amount) {
     redirectTransferError('insufficientfunds');
 }
 
-try {
-    [$senderHistoryPath, $senderHistoryOriginal, $senderHistory] = loadTransferHistory($_SESSION['userUid']);
-    [$recipientHistoryPath, $recipientHistoryOriginal, $recipientHistory] = loadTransferHistory($recipient['uidUsers']);
-} catch (RuntimeException $error) {
-    error_log("Transfer failed: ".$error->getMessage());
-    mysqli_rollback($conn);
-    redirectTransferError('historyfailed');
-}
+$senderBalance = (float)$balances[$senderId];
+$recipientBalance = (float)$balances[$recipientId];
+$senderBalanceAfter = $senderBalance - $amount;
+$recipientBalanceAfter = $recipientBalance + $amount;
+syncExternalTransfer([
+    'senderUserId' => $senderId,
+    'senderSteamId' => $senderSteamId,
+    'recipientUserId' => $recipientId,
+    'recipientSteamId' => $recipientSteamId,
+    'amount' => $amount
+]);
+syncExternalAccountBalanceUpdate([
+    'userId' => $senderId,
+    'steamId' => $senderSteamId,
+    'balanceBefore' => $senderBalance,
+    'balanceAfter' => $senderBalanceAfter
+]);
+syncExternalAccountBalanceUpdate([
+    'userId' => $recipientId,
+    'steamId' => $recipientSteamId,
+    'balanceBefore' => $recipientBalance,
+    'balanceAfter' => $recipientBalanceAfter
+]);
 
 $debitStmt = mysqli_prepare($conn, "UPDATE users SET accountBalance=accountBalance-? WHERE idUsers=?");
 $creditStmt = mysqli_prepare($conn, "UPDATE users SET accountBalance=accountBalance+? WHERE idUsers=?");
@@ -154,40 +129,38 @@ if (!mysqli_stmt_execute($debitStmt) || !mysqli_stmt_execute($creditStmt)) {
 mysqli_stmt_close($debitStmt);
 mysqli_stmt_close($creditStmt);
 
-$date = date("m/d");
-$year = date("Y");
-$senderHistory[] = [
-    "account"=>$senderSteamId,
-    "date"=>$date,
-    "year"=>$year,
-    "desc"=>"Transfer to SteamID ".$recipientSteamId,
-    "amount"=>$amount,
-    "positive"=>false
-];
-$recipientHistory[] = [
-    "account"=>$recipientSteamId,
-    "date"=>$date,
-    "year"=>$year,
-    "desc"=>"Transfer from SteamID ".$senderSteamId,
-    "amount"=>$amount,
-    "positive"=>true
-];
+$activityStmt = mysqli_prepare(
+    $conn,
+    "INSERT INTO account_activities (user_id, description, amount, is_positive, created_at) VALUES (?, ?, ?, ?, NOW())"
+);
+if (!$activityStmt) {
+    error_log("Transfer failed: unable to prepare transaction activity: ".mysqli_error($conn));
+    mysqli_rollback($conn);
+    redirectTransferError('transferfailed');
+}
+$senderDescription = "Transfer to SteamID ".$recipientSteamId;
+$senderPositive = 0;
+mysqli_stmt_bind_param($activityStmt, "isdi", $senderId, $senderDescription, $amount, $senderPositive);
+if (!mysqli_stmt_execute($activityStmt)) {
+    error_log("Transfer failed: unable to save sender activity: ".mysqli_stmt_error($activityStmt));
+    mysqli_stmt_close($activityStmt);
+    mysqli_rollback($conn);
+    redirectTransferError('transferfailed');
+}
 
-if (!writeTransferHistory($senderHistoryPath, $senderHistory)) {
-    error_log("Transfer failed: unable to save sender transaction history.");
+$recipientDescription = "Transfer from SteamID ".$senderSteamId;
+$recipientPositive = 1;
+mysqli_stmt_bind_param($activityStmt, "isdi", $recipientId, $recipientDescription, $amount, $recipientPositive);
+if (!mysqli_stmt_execute($activityStmt)) {
+    error_log("Transfer failed: unable to save recipient activity: ".mysqli_stmt_error($activityStmt));
+    mysqli_stmt_close($activityStmt);
     mysqli_rollback($conn);
-    redirectTransferError('historyfailed');
+    redirectTransferError('transferfailed');
 }
-if (!writeTransferHistory($recipientHistoryPath, $recipientHistory)) {
-    error_log("Transfer failed: unable to save recipient transaction history.");
-    restoreTransferHistory($senderHistoryPath, $senderHistoryOriginal);
-    mysqli_rollback($conn);
-    redirectTransferError('historyfailed');
-}
+mysqli_stmt_close($activityStmt);
+
 if (!mysqli_commit($conn)) {
     error_log("Transfer failed: unable to commit database transaction.");
-    restoreTransferHistory($senderHistoryPath, $senderHistoryOriginal);
-    restoreTransferHistory($recipientHistoryPath, $recipientHistoryOriginal);
     mysqli_rollback($conn);
     redirectTransferError('transferfailed');
 }

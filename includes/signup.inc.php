@@ -2,6 +2,7 @@
 if (isset($_POST['signup-submit'])) {
     
     require 'dbh.inc.php';
+    require 'external-db-sync.inc.php';
     
     $firstname = $_POST['firstname'];
     $lastname = $_POST['lastname'];
@@ -95,6 +96,25 @@ if (isset($_POST['signup-submit'])) {
                 header("Location: ../signup/index.php?error=steamidtaken&uid=".$username."&firstname=".$firstname."&lastname=".$lastname);
                 exit();
             } else {
+                $signupData = [
+                    'uidUsers' => $username,
+                    'emailUsers' => $email,
+                    'firstname' => $firstname,
+                    'lastname' => $lastname,
+                    'steamId' => $steamId,
+                    'discordId' => $discordId
+                ];
+                $signupData = array_merge(
+                    $signupData,
+                    syncExternalUserOnSignup($signupData) ?? []
+                );
+                $username = $signupData['uidUsers'];
+                $email = $signupData['emailUsers'];
+                $firstname = $signupData['firstname'];
+                $lastname = $signupData['lastname'];
+                $steamId = $signupData['steamId'];
+                $discordId = $signupData['discordId'];
+
                 $sql = "INSERT INTO users (uidUsers, emailUsers, pwdUsers, firstname, lastname, accountBalance, steamId, discordId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
                 $stmt = mysqli_stmt_init($conn);
                 if (!mysqli_stmt_prepare($stmt, $sql)) {
@@ -120,31 +140,26 @@ if (isset($_POST['signup-submit'])) {
                         header("Location: ../signup/index.php?error=signupfailed");
                         exit();
                     }
-                    $activity = array(
-                        array(
-                            "account"=>$steamId,
-                            "date"=>date("m/d"),
-                            "year"=>date("Y"),
-                            "desc"=>"Opening Balance",
-                            "amount"=>$accountBalance,
-                            "positive"=>true
-                        ),
-                    );
-                    $newFileName = '../assets/users/'.$username.".json";
-                    if (file_put_contents($newFileName, json_encode($activity, JSON_PRETTY_PRINT), LOCK_EX) === false) {
-                        error_log("Signup failed: unable to write activity file.");
-                        if (file_exists($newFileName) && !unlink($newFileName)) {
-                            error_log("Signup cleanup failed: unable to remove incomplete activity file.");
-                        }
+                    $userId = mysqli_insert_id($conn);
+                    $activityStmt = mysqli_stmt_init($conn);
+                    if (!mysqli_stmt_prepare($activityStmt, "INSERT INTO account_activities (user_id, description, amount, is_positive, created_at) VALUES (?, ?, ?, 1, NOW())")) {
+                        error_log("Signup failed: unable to prepare opening activity.");
                         mysqli_rollback($conn);
                         header("Location: ../signup/index.php?error=signupfailed");
                         exit();
                     }
+                    $openingDescription = "Opening Balance";
+                    mysqli_stmt_bind_param($activityStmt, "isd", $userId, $openingDescription, $accountBalance);
+                    if (!mysqli_stmt_execute($activityStmt)) {
+                        error_log("Signup failed: unable to save opening activity.");
+                        mysqli_stmt_close($activityStmt);
+                        mysqli_rollback($conn);
+                        header("Location: ../signup/index.php?error=signupfailed");
+                        exit();
+                    }
+                    mysqli_stmt_close($activityStmt);
                     if (!mysqli_commit($conn)) {
                         error_log("Signup failed: unable to commit user.");
-                        if (!unlink($newFileName)) {
-                            error_log("Signup cleanup failed: unable to remove activity file.");
-                        }
                         mysqli_rollback($conn);
                         header("Location: ../signup/index.php?error=signupfailed");
                         exit();

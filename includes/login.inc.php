@@ -1,6 +1,7 @@
 <?php
 if (isset($_POST['login-submit'])) {
     require 'dbh.inc.php';
+    require 'external-db-sync.inc.php';
     $mailuid = $_POST['mailuid'];
     $password = $_POST['pwd'];
     if (empty($password)) {
@@ -27,13 +28,26 @@ if (isset($_POST['login-submit'])) {
                     header("Location: ../index.php?error=wrongpwd&mailuid=".$mailuid);
                     exit();
                 } else if ($pwdCheck == true) {
+                    $loginUserData = [
+                        'uidUsers' => $row['uidUsers'],
+                        'emailUsers' => $row['emailUsers'],
+                        'firstname' => $row['firstname'],
+                        'lastname' => $row['lastname'],
+                        'steamId' => $row['steamId'],
+                        'discordId' => $row['discordId']
+                    ];
+                    $syncedUserData = syncExternalUserOnLogin($loginUserData);
+                    $authenticatedUser = $syncedUserData === null
+                        ? $row
+                        : array_merge($row, $syncedUserData);
+
                     session_start();
                     $_SESSION['userId'] = $row['idUsers'];
-                    $_SESSION['userUid'] = $row['uidUsers'];
-                    $_SESSION['userEmail'] = $row['emailUsers'];
-                    $_SESSION['firstname'] = $row['firstname'];
-                    $_SESSION['lastname'] = $row['lastname'];
-                    $_SESSION['steamId'] = $row['steamId'] ?? '';
+                    $_SESSION['userUid'] = $authenticatedUser['uidUsers'];
+                    $_SESSION['userEmail'] = $authenticatedUser['emailUsers'];
+                    $_SESSION['firstname'] = $authenticatedUser['firstname'];
+                    $_SESSION['lastname'] = $authenticatedUser['lastname'];
+                    $_SESSION['steamId'] = $authenticatedUser['steamId'] ?? '';
                     $_SESSION['sessionTimeStamp'] = time();
                     header("Location: http://".$_SERVER['HTTP_HOST']."/accounts/index.php?login=success");
                     exit();

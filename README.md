@@ -45,9 +45,13 @@ This fictional role-play project is intended for local scambaiting and personal 
 
 Compose builds the PHP/Apache image, starts MariaDB, and creates the `users` table automatically on the database's first start. Each user has one account identified by their unique 17-digit SteamID64, with a starting balance of $500. Existing users can add their SteamID from their profile page. To run the containers in the background, use `docker compose up --build -d`.
 
-The database and account activity JSON files are stored in Docker volumes named `db-data` and `account-data`. Both remain available when containers are stopped or rebuilt. To stop the site, run `docker compose down`. **Do not run `docker compose down -v` unless you intend to delete the database and account activity files.**
+The database is stored in the `db-data` Docker volume. Legacy activity JSON files remain in `account-data` after import as a backup. To stop the site, run `docker compose down`. **Do not run `docker compose down -v` unless you intend to delete the database and legacy activity files.**
 
 The default database credentials in `docker-compose.yml` are for local development only. You can override `DB_USER`, `DB_PASSWORD`, and `DB_ROOT_PASSWORD` with environment variables before starting Compose.
+
+Signup, login, transfers, profile-ID changes, and balance changes each have a separate placeholder for future external PostgreSQL synchronization in `includes/external-db-sync.inc.php`: `syncExternalUserOnSignup()`, `syncExternalUserOnLogin()`, `syncExternalTransfer()`, `syncExternalAccountInfoUpdate()`, and `syncExternalAccountBalanceUpdate()`. They currently return `null` and make no network calls, so the existing local database flows remain authoritative.
+
+Account activity records are timestamped in the database when created. Both sides of a transfer receive their own timestamped activity entry, and activity tables display the date and time.
 
 ## Updating
 Rebuild and restart the containers after updating the source:
@@ -67,13 +71,20 @@ To convert an existing database to one SteamID-numbered account per user, run:
 docker compose exec -T db sh -c 'mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" "$MARIADB_DATABASE"' < docker/migrations/002_single_steamid_accounts.sql
 ```
 This resets every existing account balance to $500. Existing users without a SteamID can add it from their profile before making transfers. Transfers are sent to another user's SteamID64.
+
+To move activity history into the database, first create the activity table and then import the existing JSON files:
+```
+docker compose exec -T db sh -c 'mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" "$MARIADB_DATABASE"' < docker/migrations/003_create_account_activities.sql
+docker compose exec web php /var/www/html/docker/migrations/import_legacy_activities.php
+```
+The import can be rerun safely. New signups and transfers write activity records directly to the database. The account page shows the five newest entries; the Activities page shows the 15 newest entries.
 ## How to use
 
 ### Sign up
 Click on `join us` on the website and fill in the form to sign up.
 New accounts start with a $500 balance. Each user has one account identified by their SteamID64.
 ### Transaction history
-Recent activities are stored as JSON files in `/var/www/html/assets/users/` inside the web container. Use `docker compose cp` to copy files between the container and your computer if you want to edit them.
+Recent activities are stored in the `account_activities` database table.
 ### Painful load
 Moved to [Painful_Load](https://github.com/lahrence/Painful-Load).
 

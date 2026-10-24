@@ -1,5 +1,6 @@
 <?php
 require 'dbh.inc.php';
+require 'external-db-sync.inc.php';
 session_start();
 require 'inactivity.php';
 
@@ -9,8 +10,16 @@ if (!isset($_SESSION['userId']) || !isset($_SESSION['timesince'])) {
 }
 
 if (isset($_POST['profile-ids-submit'])) {
-    $steamId = trim($_POST['steamid'] ?? '');
-    $discordId = trim($_POST['discordid'] ?? '');
+    $accountInfo = [
+        'steamId' => trim($_POST['steamid'] ?? ''),
+        'discordId' => trim($_POST['discordid'] ?? '')
+    ];
+    $accountInfo = array_merge(
+        $accountInfo,
+        syncExternalAccountInfoUpdate($accountInfo) ?? []
+    );
+    $steamId = $accountInfo['steamId'];
+    $discordId = $accountInfo['discordId'];
     if (!preg_match('/^[0-9]{17}$/', $steamId)) {
         header("Location: ../accounts/update/?error=invalidsteamid");
         exit();

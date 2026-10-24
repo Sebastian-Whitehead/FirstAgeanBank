@@ -7,262 +7,72 @@
         header("Location: ../");
         exit();
     }
+
     require $root.'/includes/dbh.inc.php';
     require $root.'/includes/inactivity.php';
     require $root.'/includes/variables.php';
+    require $root.'/includes/activity-table.inc.php';
+    $recentActivities = getRecentActivities($conn, (int)$_SESSION['userId'], 5);
     require $root.'/head.php';
     require $root.'/navbar.php';
-    
-    if (isset($_SESSION['userId'])) {
-        echo '
-        <script>
-        var functionName = quizTimer();
-        setInterval(function () {
-            quizTimer();
-        }, 1000);
-        
-        </script>';
+
+    $settingsJson = file_get_contents($root.'/setup.json');
+    if ($settingsJson === false) {
+        error_log("Unable to load site settings.");
+        http_response_code(500);
+        exit("Unable to load account page.");
     }
-    $json = trim(file_get_contents("../assets/users/".$_SESSION['userUid'].".json"), "\xEF\xBB\xBF");
-    $arr = json_decode($json, true);
-    $accountInfo = array_reverse($arr);
-    foreach ($accountInfo as &$activity) {
-        $activity['account'] = $userAccountNumber !== '' ? $userAccountNumber : 'SteamID not set';
+    $settings = json_decode(trim($settingsJson, "\xEF\xBB\xBF"), true);
+    if (!is_array($settings)) {
+        error_log("Site settings contain invalid JSON.");
+        http_response_code(500);
+        exit("Unable to load account page.");
     }
-    unset($activity);
-    
-    $json = trim(file_get_contents("../setup.json"), "\xEF\xBB\xBF");
-    $settings = json_decode($json, true);
 ?>
-    <body>
-        <?php
-            if ($settings["overlay"] == true) {
-                echo '<div class="overlay"></div>';
-            }
-        ?>
-        <div class="innerHere">
+<script>
+    setInterval(quizTimer, 1000);
+</script>
+<body>
+    <?php if (!empty($settings['overlay'])): ?>
+        <div class="overlay"></div>
+    <?php endif; ?>
+    <div class="innerHere">
         <div class="user-info">
             <div class="userdis">
-            <h3>Accounts</h3>
-            <table style="width:100%" class="accounts-table">
-                <tr class="checker">
-                    <th>Type</th>
-                    <th>Account Number</th>
-                    <th>Available Balance</th>
-                    <th></th>
-                </tr>
-                <tr>
-                    <td>Personal Account</td>
-                    <td><?php echo htmlspecialchars($userAccountNumber !== '' ? $userAccountNumber : 'Set SteamID in profile', ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td><?php
-                        if ($userBalance < 0) {
-                            echo '-';
-                        }
-                        echo '$'.number_format(abs($userBalance), 2, '.', ',');
-                    ?></td>
-                    <td><a href="/transfer/">Transfer</a></td>
-                </tr>
-            </table>
-            <h3>Recent Activities</h3>
-            <table style="width:100%">
-                <tr class="checker">
-                    <th>Account</th>
-                    <th>Date</th>
-                    <th>Description</th>
-                    <th>Amount</th>
-                </tr>
-                <tr>
-                    <td><?php
-                        if (array_key_exists(0 ,$accountInfo)) {
-                            echo $accountInfo[0]['account'];
-                        }
-                    ?></td>
-                    <td><?php
-                        if (array_key_exists(0 ,$accountInfo)) {
-                            echo $accountInfo[0]['date'];
-                        }
-                    ?></td>
-                    <td><?php
-                        if (array_key_exists(0 ,$accountInfo)) {
-                            echo $accountInfo[0]['desc'];
-                        }
-                    ?></td>
-                    <td class="<?php
-                        if (array_key_exists(0 ,$accountInfo)) {
-                            if ($accountInfo[0]['positive'] == true){
-                                echo 'positive';
-                            } else {
-                                echo 'negative';
+                <h3>Accounts</h3>
+                <table style="width:100%" class="accounts-table">
+                    <tr class="checker">
+                        <th>Type</th>
+                        <th>Account Number</th>
+                        <th>Available Balance</th>
+                        <th></th>
+                    </tr>
+                    <tr>
+                        <td>Personal Account</td>
+                        <td><?php echo htmlspecialchars($userAccountNumber !== '' ? $userAccountNumber : 'Set SteamID in profile', ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td><?php
+                            if ($userBalance < 0) {
+                                echo '-';
                             }
-                        }
-                    ?>"><p><?php
-                        if (array_key_exists(0 ,$accountInfo)) {
-                            if ($accountInfo[0]['positive'] == true){
-                                echo '+$';
-                            } else {
-                                echo '-$';
-                            }
-                            echo number_format($accountInfo[0]['amount'], 2, '.', ',');
-                        }
-                    ?></p></td>
-                </tr>
-                <tr class="checker">
-                    <td><?php
-                        if (array_key_exists(1 ,$accountInfo)) {
-                            echo $accountInfo[1]['account'];
-                        }
-                    ?></td>
-                    <td><?php
-                        if (array_key_exists(1 ,$accountInfo)) {
-                            echo $accountInfo[1]['date'];
-                        }
-                    ?></td>
-                    <td><?php
-                        if (array_key_exists(1 ,$accountInfo)) {
-                            echo $accountInfo[1]['desc'];
-                        }
-                    ?></td>
-                    <td class="<?php
-                        if (array_key_exists(1 ,$accountInfo)) {
-                            if ($accountInfo[1]['positive'] == true){
-                                echo 'positive';
-                            } else {
-                                echo 'negative';
-                            }
-                        }
-                    ?>"><p><?php
-                        if (array_key_exists(1 ,$accountInfo)) {
-                            if ($accountInfo[1]['positive'] == true){
-                                echo '+$';
-                            } else {
-                                echo '-$';
-                            }
-                            echo number_format($accountInfo[1]['amount'], 2, '.', ',');
-                        }
-                    ?></p></td>
-                </tr>
-                <tr>
-                    <td><?php
-                        if (array_key_exists(2 ,$accountInfo)) {
-                            echo $accountInfo[2]['account'];
-                        }
-                    ?></td>
-                    <td><?php
-                        if (array_key_exists(2 ,$accountInfo)) {
-                            echo $accountInfo[2]['date'];
-                        }
-                    ?></td>
-                    <td><?php
-                        if (array_key_exists(2 ,$accountInfo)) {
-                            echo $accountInfo[2]['desc'];
-                        }
-                    ?></td>
-                    <td class="<?php
-                        if (array_key_exists(2 ,$accountInfo)) {
-                            if ($accountInfo[2]['positive'] == true){
-                                echo 'positive';
-                            } else {
-                                echo 'negative';
-                            }
-                        }
-                    ?>"><p><?php
-                        if (array_key_exists(2 ,$accountInfo)) {
-                            if ($accountInfo[2]['positive'] == true){
-                                echo '+$';
-                            } else {
-                                echo '-$';
-                            }
-                            echo number_format($accountInfo[2]['amount'], 2, '.', ',');
-                        }
-                    ?></p></td>
-                </tr>
-                <tr class="checker">
-                    <td><?php
-                        if (array_key_exists(3 ,$accountInfo)) {
-                            echo $accountInfo[3]['account'];
-                        }
-                    ?></td>
-                    <td><?php
-                        if (array_key_exists(3 ,$accountInfo)) {
-                            echo $accountInfo[3]['date'];
-                        }
-                    ?></td>
-                    <td><?php
-                        if (array_key_exists(3 ,$accountInfo)) {
-                            echo $accountInfo[3]['desc'];
-                        }
-                    ?></td>
-                    <td class="<?php
-                        if (array_key_exists(3 ,$accountInfo)) {
-                            if ($accountInfo[3]['positive'] == true){
-                                echo 'positive';
-                            } else {
-                                echo 'negative';
-                            }
-                        }
-                    ?>">
-                    <p><?php
-                        if (array_key_exists(3 ,$accountInfo)) {
-                            if ($accountInfo[3]['positive'] == true){
-                                echo '+$';
-                            } else {
-                                echo '-$';
-                            }
-                            echo number_format($accountInfo[3]['amount'], 2, '.', ',');
-                        }
-                    ?></p></td>
-                </tr>
-                <tr>
-                    <td><?php
-                        if (array_key_exists(4 ,$accountInfo)) {
-                            echo $accountInfo[4]['account'];
-                        }
-                    ?></td>
-                    <td><?php
-                        if (array_key_exists(4 ,$accountInfo)) {
-                            echo $accountInfo[4]['date'];
-                        }
-                    ?></td>
-                    <td><?php
-                        if (array_key_exists(4 ,$accountInfo)) {
-                            echo $accountInfo[4]['desc'];
-                        }
-                    ?></td>
-                    <td class="<?php
-                        if (array_key_exists(4 ,$accountInfo)) {
-                            if ($accountInfo[4]['positive'] == true){
-                                echo 'positive';
-                            } else {
-                                echo 'negative';
-                            }
-                        }
-                    ?>"><p><?php
-                        if (array_key_exists(4 ,$accountInfo)) {
-                            if ($accountInfo[4]['positive'] == true){
-                                echo '+$';
-                            } else {
-                                echo '-$';
-                            }
-                            echo number_format($accountInfo[4]['amount'], 2, '.', ','); 
-                        }
-                    ?></p></td>
-                </tr>
-            </table>
-            <div class="after-content">
-                    <?php
-                        if ($settings["downloadButton"] == true) {
-                            echo '<a class="download" href="';
-                            echo $settings["downloadFileLink"];
-                            echo '" target="_blank" download>';
-                            echo $settings["downloadButtonText"];
-                            echo '</a>';
-                        }
-                    ?>
-                <p class="load" style="margin-bottom: 100px;"><a href="/activities/">Load More</a></p>
+                            echo '$'.number_format(abs((float)$userBalance), 2, '.', ',');
+                        ?></td>
+                        <td><a href="/transfer/">Transfer</a></td>
+                    </tr>
+                </table>
+
+                <h3>Recent Activities</h3>
+                <?php renderActivityTable($recentActivities); ?>
+                <div class="after-content">
+                    <?php if (!empty($settings['downloadButton'])): ?>
+                        <a class="download" href="<?php echo htmlspecialchars($settings['downloadFileLink'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" download>
+                            <?php echo htmlspecialchars($settings['downloadButtonText'], ENT_QUOTES, 'UTF-8'); ?>
+                        </a>
+                    <?php endif; ?>
+                    <p class="load" style="margin-bottom: 100px;"><a href="/activities/">Load More</a></p>
+                </div>
             </div>
         </div>
-        <?php
-            require '../footer.php';
-        ?>
-    </body>
+    </div>
+    <?php require '../footer.php'; ?>
+</body>
 </html>
