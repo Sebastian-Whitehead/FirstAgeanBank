@@ -1,0 +1,42 @@
+name: first-agean-bank
+
+services:
+  web:
+    container_name: first-agean-bank-web
+    build: .
+    ports:
+      - "127.0.0.1:8080:80"
+    environment:
+      DB_HOST: db
+      DB_NAME: gulllebelle
+      DB_USER: ${DB_USER:-gulllebelle}
+      DB_PASSWORD: ${DB_PASSWORD:-gulllebelle-local}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - account-data:/var/www/html/assets/users
+
+  db:
+    container_name: first-agean-bank-db
+    image: mariadb:11.4
+    environment:
+      MARIADB_DATABASE: gulllebelle
+      MARIADB_USER: ${DB_USER:-gulllebelle}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-gulllebelle-local}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-gulllebelle-root-local}
+    volumes:
+      - db-data:/var/lib/mysql
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  account-data:
+    name: gulllebelle_account-data
+  db-data:
+    name: gulllebelle_db-data
