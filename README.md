@@ -14,6 +14,9 @@ This fictional role-play project is intended for local scambaiting and personal 
 * Disabled inspect on account information page (still accessible through other pages)
 * Session inactivity timeout (15 minutes)
 * Recent activities
+* React frontend for public, account, transfer, activity, profile, and investment pages
+
+The React application is organized by responsibility: route-level pages live in `frontend/src/pages`, shared UI in `frontend/src/components`, and session/API helpers in `frontend/src/contexts` and `frontend/src/lib`. `frontend/src/main.jsx` is the small application entry point; routes are composed in `frontend/src/App.jsx`.
 
 ## Features to add
 * External account transfer
@@ -31,11 +34,11 @@ This fictional role-play project is intended for local scambaiting and personal 
    ```
 3. Open [http://localhost:8080](http://localhost:8080).
 
-Compose builds the PHP/Apache image, starts MariaDB, and creates the `users` table automatically on the database's first start. Each user has one account identified by their unique 17-digit SteamID64, with a starting balance of $500. Existing users can add their SteamID from their profile page. To run the containers in the background, use `docker compose up --build -d`.
+Compose builds the React frontend with Node, serves the static React app through Apache, starts MariaDB, and creates the `users` table automatically on the database's first start. React provides the entire website UI; PHP remains only for API/backend operations such as authentication, account updates, and database access. The former PHP-rendered page templates have been removed. Each user has one account identified by their unique 17-digit SteamID64, with a starting balance of $500. Existing users can add their SteamID from their profile page. To run the containers in the background, use `docker compose up --build -d`.
 
 The database is stored in the `db-data` Docker volume. Legacy activity JSON files remain in `account-data` after import as a backup. To stop the site, run `docker compose down`. **Do not run `docker compose down -v` unless you intend to delete the database and legacy activity files.**
 
-The default database credentials in `docker-compose.yml` are for local development only. You can override `DB_USER`, `DB_PASSWORD`, and `DB_ROOT_PASSWORD` with environment variables before starting Compose.
+The default database credentials in `docker-compose.yml` are for local development only. You can override `DB_USER`, `DB_PASSWORD`, and `DB_ROOT_PASSWORD` with environment variables before starting Compose. Node/npm are only needed for local frontend development; Docker builds the static React app as part of the web image.
 
 Signup, login, transfers, profile-ID changes, and balance changes each have a separate placeholder for future external PostgreSQL synchronization in `includes/external-db-sync.inc.php`: `syncExternalUserOnSignup()`, `syncExternalUserOnLogin()`, `syncExternalTransfer()`, `syncExternalAccountInfoUpdate()`, and `syncExternalAccountBalanceUpdate()`. They currently return `null` and make no network calls, so the existing local database flows remain authoritative.
 
@@ -54,6 +57,12 @@ docker compose exec -T db sh -c 'mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" "$MAR
 ```
 The migration is safe to run more than once.
 
+Sign-in and signup use usernames only. To allow new users without a stored email value, update an existing database with:
+```
+docker compose exec -T db sh -c 'mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" "$MARIADB_DATABASE"' < docker/migrations/004_make_email_optional.sql
+```
+Existing stored values are preserved; new accounts do not need or store an email value.
+
 To convert an existing database to one SteamID-numbered account per user, run:
 ```
 docker compose exec -T db sh -c 'mariadb -uroot -p"$MARIADB_ROOT_PASSWORD" "$MARIADB_DATABASE"' < docker/migrations/002_single_steamid_accounts.sql
@@ -69,7 +78,7 @@ The import can be rerun safely. New signups and transfers write activity records
 ## How to use
 
 ### Sign up
-Click on `join us` on the website and fill in the form to sign up.
+Click on `join us` on the website and fill in the username, password, and account details to sign up. Sign in with your username and password.
 New accounts start with a $500 balance. Each user has one account identified by their SteamID64.
 ### Transaction history
 Recent activities are stored in the `account_activities` database table.

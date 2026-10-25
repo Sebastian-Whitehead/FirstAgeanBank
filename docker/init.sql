@@ -1,7 +1,7 @@
 CREATE TABLE `users` (
   `idUsers` int(11) NOT NULL AUTO_INCREMENT,
   `uidUsers` tinytext NOT NULL,
-  `emailUsers` tinytext NOT NULL,
+  `emailUsers` tinytext DEFAULT NULL,
   `pwdUsers` longtext NOT NULL,
   `firstname` text NOT NULL,
   `lastname` text NOT NULL,

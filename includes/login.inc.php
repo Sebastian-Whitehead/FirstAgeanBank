@@ -1,36 +1,28 @@
 <?php
 if (isset($_POST['login-submit'])) {
+    require 'http-response.inc.php';
     require 'dbh.inc.php';
     require 'external-db-sync.inc.php';
-    $mailuid = $_POST['mailuid'];
-    $password = $_POST['pwd'];
-    if (empty($password)) {
-        if (empty($mailuid)) {
-            header("Location: ../index.php?error=emptyfields");
-            exit();
-        } else {
-            header("Location: ../index.php?error=emptyfields&mailuid=".$mailuid);
-            exit();
-        }
+    $username = $_POST['username'] ?? '';
+    $password = $_POST['pwd'] ?? '';
+    if (empty($username) || empty($password)) {
+        finishRequest('/?error=emptyfields', 'emptyfields');
     } else {
-        $sql = "SELECT * FROM users WHERE uidUsers=? OR emailUsers=?;";
+        $sql = "SELECT * FROM users WHERE uidUsers=?;";
         $stmt = mysqli_stmt_init($conn);
         if (!mysqli_stmt_prepare($stmt, $sql)) {
-            header("Location: ../index.php?error=sqlerror");
-            exit();
+            finishRequest('/?error=sqlerror', 'sqlerror');
         } else {
-            mysqli_stmt_bind_param($stmt, "ss", $mailuid, $mailuid);
+            mysqli_stmt_bind_param($stmt, "s", $username);
             mysqli_stmt_execute($stmt);
             $result = mysqli_stmt_get_result($stmt);
             if ($row = mysqli_fetch_assoc($result)) {
                 $pwdCheck  = password_verify($password, $row['pwdUsers']);
                 if ($pwdCheck == false) {
-                    header("Location: ../index.php?error=wrongpwd&mailuid=".$mailuid);
-                    exit();
+                    finishRequest('/?error=wrongpwd', 'wrongpwd');
                 } else if ($pwdCheck == true) {
                     $loginUserData = [
                         'uidUsers' => $row['uidUsers'],
-                        'emailUsers' => $row['emailUsers'],
                         'firstname' => $row['firstname'],
                         'lastname' => $row['lastname'],
                         'steamId' => $row['steamId'],
@@ -44,27 +36,23 @@ if (isset($_POST['login-submit'])) {
                     session_start();
                     $_SESSION['userId'] = $row['idUsers'];
                     $_SESSION['userUid'] = $authenticatedUser['uidUsers'];
-                    $_SESSION['userEmail'] = $authenticatedUser['emailUsers'];
                     $_SESSION['firstname'] = $authenticatedUser['firstname'];
                     $_SESSION['lastname'] = $authenticatedUser['lastname'];
                     $_SESSION['steamId'] = $authenticatedUser['steamId'] ?? '';
                     $_SESSION['sessionTimeStamp'] = time();
-                    header("Location: http://".$_SERVER['HTTP_HOST']."/accounts/index.php?login=success");
-                    exit();
+                    finishRequest('/accounts/?login=success');
                 } else {
-                    header("Location: ../index.php?error=wrongpwd&mailuid=".$mailuid);
-                    exit();
+                    finishRequest('/?error=wrongpwd', 'wrongpwd');
                 }
             } else {
-                header("Location: ../index.php?error=usernotfound");
-                exit();
+                finishRequest('/?error=usernotfound', 'usernotfound');
             }
         }
     }
 } else if(isset($_POST['join-submit'])) {
-    header("Location: http://".$_SERVER['HTTP_HOST']."/signup/");
-    exit();
+    require 'http-response.inc.php';
+    finishRequest('/signup/');
 } else {
-    header("Location: ../index.php");
-    exit();
+    require 'http-response.inc.php';
+    finishRequest('/');
 }

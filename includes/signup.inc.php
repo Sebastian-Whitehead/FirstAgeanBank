@@ -1,104 +1,66 @@
 <?php
 if (isset($_POST['signup-submit'])) {
-    
+    require 'http-response.inc.php';
     require 'dbh.inc.php';
     require 'external-db-sync.inc.php';
     
-    $firstname = $_POST['firstname'];
-    $lastname = $_POST['lastname'];
-    $username = $_POST['uid'];
-    $email = $_POST['mail'];
+    $firstname = $_POST['firstname'] ?? '';
+    $lastname = $_POST['lastname'] ?? '';
+    $username = $_POST['uid'] ?? '';
     $steamId = $_POST['steamid'] ?? '';
     $discordId = $_POST['discordid'] ?? '';
-    $password = $_POST['pwd'];
-    $passwordRepeat = $_POST['pwd-repeat'];
+    $password = $_POST['pwd'] ?? '';
+    $passwordRepeat = $_POST['pwd-repeat'] ?? '';
     
     $accountBalance = 500.00;
     
-    if (empty($firstname) || empty($lastname) || empty($username) || empty($email) || empty($steamId) || empty($discordId) || empty($password) || empty($passwordRepeat)) {
-        header("Location: ../signup/index.php?error=emptyfields&uid=".$username."&mail=".$email."&firstname=".$firstname."&lastname=".$lastname);
-        exit();
+    if (empty($firstname) || empty($lastname) || empty($username) || empty($steamId) || empty($discordId) || empty($password) || empty($passwordRepeat)) {
+        finishRequest('/signup/?error=emptyfields', 'emptyfields');
     } else if (!preg_match('/^[0-9]{17}$/', $steamId)) {
-        header("Location: ../signup/index.php?error=invalidsteamid");
-        exit();
+        finishRequest('/signup/?error=invalidsteamid', 'invalidsteamid');
     } else if (!preg_match('/^[0-9]{17,20}$/', $discordId)) {
-        header("Location: ../signup/index.php?error=invaliddiscordid");
-        exit();
-    } else if (!filter_var($email, FILTER_VALIDATE_EMAIL) && !preg_match("/^[a-zA-Z0-9]*$/", $username)) {
-        header("Location: ../signup/index.php?error=invalidmailuid");
-        exit();
-    } else if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        header("Location: ../signup/index.php?error=invalidmail&uid=".$username);
-        exit();
+        finishRequest('/signup/?error=invaliddiscordid', 'invaliddiscordid');
     } else if (!preg_match("/^[a-zA-Z0-9]*$/", $username)) {
-        header("Location: ../signup/index.php?error=invaliduid&mail=".$email);
-        exit();
+        finishRequest('/signup/?error=invaliduid', 'invaliduid');
     } else if ($password !== $passwordRepeat) {
-        header("Location: ../signup/index.php?error=passwordcheck&uid=".$username."&mail=".$email);
-        exit();
+        finishRequest('/signup/?error=passwordcheck', 'passwordcheck');
     } else if ((strlen($lastname) > 35) || (strlen($firstname) > 35)) {
-        header("Location: ../signup/index.php?error=characterlimit&uid=".$username."&mail=".$email);
-        exit();
+        finishRequest('/signup/?error=characterlimit', 'characterlimit');
     } else {
         $sql = "SELECT uidUsers FROM users WHERE uidUsers=?";
         $stmt = mysqli_stmt_init($conn);
         if (!mysqli_stmt_prepare($stmt, $sql)) {
             error_log("Signup failed: unable to prepare username lookup.");
-            header("Location: ../signup/index.php?error=signupfailed");
-            exit();
+            finishRequest('/signup/?error=signupfailed', 'signupfailed');
         } else {
             mysqli_stmt_bind_param($stmt, "s", $username);
             if (!mysqli_stmt_execute($stmt)) {
                 error_log("Signup failed: unable to query username.");
-                header("Location: ../signup/index.php?error=signupfailed");
-                exit();
+                finishRequest('/signup/?error=signupfailed', 'signupfailed');
             }
             mysqli_stmt_store_result($stmt);
             $resultCheck = mysqli_stmt_num_rows($stmt);
-            $emailStmt = mysqli_stmt_init($conn);
-            if (!mysqli_stmt_prepare($emailStmt, "SELECT emailUsers FROM users WHERE emailUsers=?")) {
-                error_log("Signup failed: unable to prepare email lookup.");
-                header("Location: ../signup/index.php?error=signupfailed");
-                exit();
-            }
-            mysqli_stmt_bind_param($emailStmt, "s", $email);
-            if (!mysqli_stmt_execute($emailStmt)) {
-                error_log("Signup failed: unable to query email.");
-                header("Location: ../signup/index.php?error=signupfailed");
-                exit();
-            }
-            mysqli_stmt_store_result($emailStmt);
-            $resultCheck2 = mysqli_stmt_num_rows($emailStmt);
-            mysqli_stmt_close($emailStmt);
             $steamStmt = mysqli_stmt_init($conn);
             if (!mysqli_stmt_prepare($steamStmt, "SELECT idUsers FROM users WHERE steamId=?")) {
                 error_log("Signup failed: unable to prepare SteamID lookup.");
-                header("Location: ../signup/index.php?error=signupfailed");
-                exit();
+                finishRequest('/signup/?error=signupfailed', 'signupfailed');
             }
             mysqli_stmt_bind_param($steamStmt, "s", $steamId);
             if (!mysqli_stmt_execute($steamStmt)) {
                 error_log("Signup failed: unable to query SteamID.");
-                header("Location: ../signup/index.php?error=signupfailed");
-                exit();
+                finishRequest('/signup/?error=signupfailed', 'signupfailed');
             }
             mysqli_stmt_store_result($steamStmt);
             $resultCheck3 = mysqli_stmt_num_rows($steamStmt);
             mysqli_stmt_close($steamStmt);
 
             if ($resultCheck > 0) {
-                header("Location: ../signup/index.php?error=uidtaken&mail=".$email."&firstname=".$firstname."&lastname=".$lastname);
-                exit();
-            } else if ($resultCheck2 > 0) {
-                header("Location: ../signup/index.php?error=emailtaken&uid=".$username."&firstname=".$firstname."&lastname=".$lastname);
-                exit();
+                finishRequest('/signup/?error=uidtaken', 'uidtaken');
             } else if ($resultCheck3 > 0) {
-                header("Location: ../signup/index.php?error=steamidtaken&uid=".$username."&firstname=".$firstname."&lastname=".$lastname);
-                exit();
+                finishRequest('/signup/?error=steamidtaken', 'steamidtaken');
             } else {
                 $signupData = [
                     'uidUsers' => $username,
-                    'emailUsers' => $email,
                     'firstname' => $firstname,
                     'lastname' => $lastname,
                     'steamId' => $steamId,
@@ -109,44 +71,37 @@ if (isset($_POST['signup-submit'])) {
                     syncExternalUserOnSignup($signupData) ?? []
                 );
                 $username = $signupData['uidUsers'];
-                $email = $signupData['emailUsers'];
                 $firstname = $signupData['firstname'];
                 $lastname = $signupData['lastname'];
                 $steamId = $signupData['steamId'];
                 $discordId = $signupData['discordId'];
 
-                $sql = "INSERT INTO users (uidUsers, emailUsers, pwdUsers, firstname, lastname, accountBalance, steamId, discordId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                $sql = "INSERT INTO users (uidUsers, pwdUsers, firstname, lastname, accountBalance, steamId, discordId) VALUES (?, ?, ?, ?, ?, ?, ?)";
                 $stmt = mysqli_stmt_init($conn);
                 if (!mysqli_stmt_prepare($stmt, $sql)) {
-                    header("Location: ../signup/index.php?error=sqlerror");
-                    exit();
+                    finishRequest('/signup/?error=sqlerror', 'sqlerror');
                 } else if (strlen($password) < 6) {
-                    header("Location: ../signup/index.php?error=passlength&uid=".$username."&mail=".$email."&firstname=".$firstname."&lastname=".$lastname);
-                    exit();
+                    finishRequest('/signup/?error=passlength', 'passlength');
                 } else if (!preg_match('/[\'^£$%&*()};:"`{@#~?!.><>,|=_+¬-]/', $password)) {
-                    header("Location: ../signup/index.php?error=weakpass&uid=".$username."&mail=".$email."&firstname=".$firstname."&lastname=".$lastname);
-                    exit();
+                    finishRequest('/signup/?error=weakpass', 'weakpass');
                 } else {
                     $hashedPwd = password_hash($password, PASSWORD_DEFAULT);
-                    mysqli_stmt_bind_param($stmt, "sssssdss", $username, $email, $hashedPwd, $firstname, $lastname, $accountBalance, $steamId, $discordId);
+                    mysqli_stmt_bind_param($stmt, "ssssdss", $username, $hashedPwd, $firstname, $lastname, $accountBalance, $steamId, $discordId);
                     if (!mysqli_begin_transaction($conn)) {
                         error_log("Signup failed: unable to start database transaction.");
-                        header("Location: ../signup/index.php?error=signupfailed");
-                        exit();
+                        finishRequest('/signup/?error=signupfailed', 'signupfailed');
                     }
                     if (!mysqli_stmt_execute($stmt)) {
                         error_log("Signup failed: unable to insert user.");
                         mysqli_rollback($conn);
-                        header("Location: ../signup/index.php?error=signupfailed");
-                        exit();
+                        finishRequest('/signup/?error=signupfailed', 'signupfailed');
                     }
                     $userId = mysqli_insert_id($conn);
                     $activityStmt = mysqli_stmt_init($conn);
                     if (!mysqli_stmt_prepare($activityStmt, "INSERT INTO account_activities (user_id, description, amount, is_positive, created_at) VALUES (?, ?, ?, 1, NOW())")) {
                         error_log("Signup failed: unable to prepare opening activity.");
                         mysqli_rollback($conn);
-                        header("Location: ../signup/index.php?error=signupfailed");
-                        exit();
+                        finishRequest('/signup/?error=signupfailed', 'signupfailed');
                     }
                     $openingDescription = "Opening Balance";
                     mysqli_stmt_bind_param($activityStmt, "isd", $userId, $openingDescription, $accountBalance);
@@ -154,18 +109,15 @@ if (isset($_POST['signup-submit'])) {
                         error_log("Signup failed: unable to save opening activity.");
                         mysqli_stmt_close($activityStmt);
                         mysqli_rollback($conn);
-                        header("Location: ../signup/index.php?error=signupfailed");
-                        exit();
+                        finishRequest('/signup/?error=signupfailed', 'signupfailed');
                     }
                     mysqli_stmt_close($activityStmt);
                     if (!mysqli_commit($conn)) {
                         error_log("Signup failed: unable to commit user.");
                         mysqli_rollback($conn);
-                        header("Location: ../signup/index.php?error=signupfailed");
-                        exit();
+                        finishRequest('/signup/?error=signupfailed', 'signupfailed');
                     }
-                    header("Location: ../index.php?signup=success");
-                    exit();
+                    finishRequest('/?signup=success');
                 }
             }
         }
@@ -173,6 +125,6 @@ if (isset($_POST['signup-submit'])) {
     mysqli_stmt_close($stmt);
     mysqli_close($conn);
 } else {
-    header("Location: http://".$_SERVER['HTTP_HOST']."/signup/");
-    exit();
+    require 'http-response.inc.php';
+    finishRequest('/signup/');
 }

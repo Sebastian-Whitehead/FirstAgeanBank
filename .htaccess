@@ -1,1 +1,4 @@
 ErrorDocument 404 /assets/error-html/404.html
+
+RewriteEngine On
+RewriteRule ^(accounts/update|accounts|transfer|activities/all|activities|investments|signup)(/.*)?$ /index.html [L,QSA]

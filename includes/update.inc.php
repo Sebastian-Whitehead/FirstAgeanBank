@@ -1,12 +1,12 @@
 <?php
 require 'dbh.inc.php';
 require 'external-db-sync.inc.php';
+require 'http-response.inc.php';
 session_start();
 require 'inactivity.php';
 
-if (!isset($_SESSION['userId']) || !isset($_SESSION['timesince'])) {
-    header("Location: ../index.php?error=loggedout");
-    exit();
+if (!isset($_SESSION['userId']) || !isset($_SESSION['sessionTimeStamp'])) {
+    finishRequest('/', 'loggedout');
 }
 
 if (isset($_POST['profile-ids-submit'])) {
@@ -21,27 +21,23 @@ if (isset($_POST['profile-ids-submit'])) {
     $steamId = $accountInfo['steamId'];
     $discordId = $accountInfo['discordId'];
     if (!preg_match('/^[0-9]{17}$/', $steamId)) {
-        header("Location: ../accounts/update/?error=invalidsteamid");
-        exit();
+        finishRequest('/accounts/update/?error=invalidsteamid', 'invalidsteamid');
     }
     if (!preg_match('/^[0-9]{17,20}$/', $discordId)) {
-        header("Location: ../accounts/update/?error=invaliddiscordid");
-        exit();
+        finishRequest('/accounts/update/?error=invaliddiscordid', 'invaliddiscordid');
     }
 
     $stmt = mysqli_prepare($conn, "SELECT idUsers FROM users WHERE steamId=? AND idUsers<>?");
     mysqli_stmt_bind_param($stmt, "si", $steamId, $_SESSION['userId']);
     if (!mysqli_stmt_execute($stmt)) {
         error_log("Profile update failed: unable to check SteamID.");
-        header("Location: ../accounts/update/?error=updatefailed");
-        exit();
+        finishRequest('/accounts/update/?error=updatefailed', 'updatefailed');
     }
     mysqli_stmt_store_result($stmt);
     $steamIdTaken = mysqli_stmt_num_rows($stmt) > 0;
     mysqli_stmt_close($stmt);
     if ($steamIdTaken) {
-        header("Location: ../accounts/update/?error=steamidtaken");
-        exit();
+        finishRequest('/accounts/update/?error=steamidtaken', 'steamidtaken');
     }
 
     $stmt = mysqli_prepare($conn, "UPDATE users SET steamId=?, discordId=? WHERE idUsers=?");
@@ -49,17 +45,15 @@ if (isset($_POST['profile-ids-submit'])) {
     if (!mysqli_stmt_execute($stmt)) {
         $duplicateSteamId = mysqli_stmt_errno($stmt) === 1062;
         if ($duplicateSteamId) {
-            header("Location: ../accounts/update/?error=steamidtaken");
+            finishRequest('/accounts/update/?error=steamidtaken', 'steamidtaken');
         } else {
             error_log("Profile update failed: unable to save SteamID.");
-            header("Location: ../accounts/update/?error=updatefailed");
+            finishRequest('/accounts/update/?error=updatefailed', 'updatefailed');
         }
-        exit();
     }
     mysqli_stmt_close($stmt);
     $_SESSION['steamId'] = $steamId;
-    header("Location: ../accounts/update/?profile=updated");
-    exit();
+    finishRequest('/accounts/update/?profile=updated');
 }
 
 if (isset($_POST['update-submit'])) {
@@ -70,20 +64,17 @@ if (isset($_POST['update-submit'])) {
     mysqli_stmt_bind_param($stmt, "i", $_SESSION['userId']);
     if (!mysqli_stmt_execute($stmt)) {
         error_log("Password update failed: unable to load user.");
-        header("Location: ../accounts/index.php?error=sqlerror");
-        exit();
+        finishRequest('/accounts/?error=sqlerror', 'sqlerror');
     }
     $result = mysqli_stmt_get_result($stmt);
     $user = mysqli_fetch_assoc($result);
     mysqli_stmt_close($stmt);
 
     if ($user === null || !password_verify($oldPassword, $user['pwdUsers'])) {
-        header("Location: ../accounts/index.php?error=wrongpwd");
-        exit();
+        finishRequest('/accounts/?error=wrongpwd', 'wrongpwd');
     }
     if ($newPassword !== $confirmPassword) {
-        header("Location: ../accounts/index.php?error=matchpwd");
-        exit();
+        finishRequest('/accounts/?error=matchpwd', 'matchpwd');
     }
 
     $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
@@ -91,13 +82,12 @@ if (isset($_POST['update-submit'])) {
     mysqli_stmt_bind_param($stmt, "si", $hashedPassword, $_SESSION['userId']);
     if (!mysqli_stmt_execute($stmt)) {
         error_log("Password update failed: unable to save password.");
-        header("Location: ../accounts/index.php?error=sqlerror");
-        exit();
+        finishRequest('/accounts/?error=sqlerror', 'sqlerror');
     }
     mysqli_stmt_close($stmt);
-    header("Location: ../includes/logout.inc.php");
-    exit();
+    $_SESSION = [];
+    session_destroy();
+    finishRequest('/');
 }
 
-header("Location: ../accounts/update/");
-exit();
+finishRequest('/accounts/update/');

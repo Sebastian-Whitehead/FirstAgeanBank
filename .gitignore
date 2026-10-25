@@ -2,3 +2,5 @@ assets/users/*
 !assets/users/delete.txt
 /Search_Spoof.zip
 /assets/Gull-le-Belle-records.zip
+/node_modules/
+/assets/react/

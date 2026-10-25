@@ -1,22 +1,20 @@
 <?php
 require 'dbh.inc.php';
 require 'external-db-sync.inc.php';
+require 'http-response.inc.php';
 session_start();
 require 'inactivity.php';
 
 function redirectTransferError($error)
 {
-    header("Location: ../transfer/index.php?error=".$error);
-    exit();
+    finishRequest('/transfer/?error='.$error, $error);
 }
 
-if (!isset($_SESSION['userId']) || !isset($_SESSION['timesince'])) {
-    header("Location: ../");
-    exit();
+if (!isset($_SESSION['userId']) || !isset($_SESSION['sessionTimeStamp'])) {
+    finishRequest('/', 'loggedout');
 }
 if (!isset($_POST['transfer-submit'])) {
-    header("Location: ../transfer/");
-    exit();
+    finishRequest('/transfer/');
 }
 
 $senderSteamId = $_SESSION['steamId'] ?? '';
@@ -165,6 +163,5 @@ if (!mysqli_commit($conn)) {
     redirectTransferError('transferfailed');
 }
 
-header("Location: ../accounts/index.php?transfer=success");
-exit();
+finishRequest('/accounts/?transfer=success');
 ?>
