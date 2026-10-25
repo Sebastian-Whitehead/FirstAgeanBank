@@ -14,23 +14,10 @@ This fictional role-play project is intended for local scambaiting and personal 
 * Disabled inspect on account information page (still accessible through other pages)
 * Session inactivity timeout (15 minutes)
 * Recent activities
-* Creepy face show up from time to time
 
 ## Features to add
 * External account transfer
 * Any other features I can think of
-
-## Screenshots
-### Home page
-![image](assets/png/Screenshot.3.png)
-### Logged in home page
-![image](assets/png/Screenshot.1.png)
-### Account page
-![image](assets/png/Screenshot.2.png)
-### Transfer page
-![image](assets/png/Screenshot.4.png)
-### Activities page
-![image](assets/png/Screenshot.5.png)
 
 ## How to setup
 ### Requirements
