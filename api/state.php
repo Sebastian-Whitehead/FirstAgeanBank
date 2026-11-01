@@ -17,11 +17,11 @@ if (!isset($_SESSION['sessionTimeStamp']) || time() - (int)$_SESSION['sessionTim
 
 $_SESSION['sessionTimeStamp'] = time();
 require __DIR__.'/../includes/dbh.inc.php';
-require __DIR__.'/../includes/activity-table.inc.php';
+require __DIR__.'/../includes/supabase.inc.php';
 
 $stmt = mysqli_prepare(
     $conn,
-    "SELECT uidUsers, firstname, lastname, accountBalance, steamId, discordId
+    "SELECT uidUsers, firstname, lastname, steamId, discordId
      FROM users WHERE idUsers=?"
 );
 if (!$stmt) {
@@ -52,15 +52,53 @@ if ($user === null) {
     exit();
 }
 
+$account = null;
+if (preg_match('/^[0-9]{17}$/', (string)$user['steamId'])) {
+    try {
+        $account = supabaseRpc('fab_get_player_account', [
+            'p_steam_id' => $user['steamId'],
+            'p_limit' => 15
+        ]);
+    } catch (SupabaseRequestException $error) {
+        error_log('Unable to load Supabase account state: '.$error->getMessage());
+        http_response_code(503);
+        echo json_encode(['error' => 'Unable to load account state.']);
+        exit();
+    }
+
+    if ($account === null) {
+        error_log('No Supabase player account is linked to the authenticated user.');
+        http_response_code(503);
+        echo json_encode(['error' => 'Unable to load account state.']);
+        exit();
+    }
+
+}
+
+$accounts = $account['accounts'] ?? [];
+if (!is_array($accounts)) {
+    error_log('Supabase returned an invalid player account list.');
+    http_response_code(503);
+    echo json_encode(['error' => 'Unable to load account state.']);
+    exit();
+}
+
 echo json_encode([
     'authenticated' => true,
     'user' => [
         'username' => $user['uidUsers'],
         'firstname' => $user['firstname'],
         'lastname' => $user['lastname'],
-        'balance' => (float)$user['accountBalance'],
+        'accounts' => array_map(static function (array $account): array {
+            return [
+                'accountNumber' => $account['account_number'],
+                'name' => $account['account_name'] ?? '',
+                'type' => $account['account_type'],
+                'balance' => (int)$account['money'] / 100
+            ];
+        }, $accounts),
         'steamId' => $user['steamId'] ?? '',
         'discordId' => $user['discordId'] ?? ''
     ],
-    'activities' => getRecentActivities($conn, $userId, 15)
+    'activities' => $account['activities'] ?? []
 ]);

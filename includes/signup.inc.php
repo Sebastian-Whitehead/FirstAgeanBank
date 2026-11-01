@@ -8,18 +8,16 @@ if (isset($_POST['signup-submit'])) {
     $lastname = $_POST['lastname'] ?? '';
     $username = $_POST['uid'] ?? '';
     $steamId = $_POST['steamid'] ?? '';
-    $discordId = $_POST['discordid'] ?? '';
+    $discordId = null;
     $password = $_POST['pwd'] ?? '';
     $passwordRepeat = $_POST['pwd-repeat'] ?? '';
     
-    $accountBalance = 500.00;
+    $accountBalance = 0.00;
     
-    if (empty($firstname) || empty($lastname) || empty($username) || empty($steamId) || empty($discordId) || empty($password) || empty($passwordRepeat)) {
+    if (empty($firstname) || empty($lastname) || empty($username) || empty($steamId) || empty($password) || empty($passwordRepeat)) {
         finishRequest('/signup/?error=emptyfields', 'emptyfields');
     } else if (!preg_match('/^[0-9]{17}$/', $steamId)) {
         finishRequest('/signup/?error=invalidsteamid', 'invalidsteamid');
-    } else if (!preg_match('/^[0-9]{17,20}$/', $discordId)) {
-        finishRequest('/signup/?error=invaliddiscordid', 'invaliddiscordid');
     } else if (!preg_match("/^[a-zA-Z0-9]*$/", $username)) {
         finishRequest('/signup/?error=invaliduid', 'invaliduid');
     } else if ($password !== $passwordRepeat) {
@@ -66,16 +64,6 @@ if (isset($_POST['signup-submit'])) {
                     'steamId' => $steamId,
                     'discordId' => $discordId
                 ];
-                $signupData = array_merge(
-                    $signupData,
-                    syncExternalUserOnSignup($signupData) ?? []
-                );
-                $username = $signupData['uidUsers'];
-                $firstname = $signupData['firstname'];
-                $lastname = $signupData['lastname'];
-                $steamId = $signupData['steamId'];
-                $discordId = $signupData['discordId'];
-
                 $sql = "INSERT INTO users (uidUsers, pwdUsers, firstname, lastname, accountBalance, steamId, discordId) VALUES (?, ?, ?, ?, ?, ?, ?)";
                 $stmt = mysqli_stmt_init($conn);
                 if (!mysqli_stmt_prepare($stmt, $sql)) {
@@ -85,6 +73,13 @@ if (isset($_POST['signup-submit'])) {
                 } else if (!preg_match('/[\'^£$%&*()};:"`{@#~?!.><>,|=_+¬-]/', $password)) {
                     finishRequest('/signup/?error=weakpass', 'weakpass');
                 } else {
+                    try {
+                        syncExternalUserOnSignup($signupData);
+                    } catch (SupabaseRequestException $error) {
+                        error_log('Signup failed while provisioning the Supabase account: '.$error->getMessage());
+                        finishRequest('/signup/?error=supabaseunavailable', 'supabaseunavailable');
+                    }
+
                     $hashedPwd = password_hash($password, PASSWORD_DEFAULT);
                     mysqli_stmt_bind_param($stmt, "ssssdss", $username, $hashedPwd, $firstname, $lastname, $accountBalance, $steamId, $discordId);
                     if (!mysqli_begin_transaction($conn)) {
@@ -96,22 +91,6 @@ if (isset($_POST['signup-submit'])) {
                         mysqli_rollback($conn);
                         finishRequest('/signup/?error=signupfailed', 'signupfailed');
                     }
-                    $userId = mysqli_insert_id($conn);
-                    $activityStmt = mysqli_stmt_init($conn);
-                    if (!mysqli_stmt_prepare($activityStmt, "INSERT INTO account_activities (user_id, description, amount, is_positive, created_at) VALUES (?, ?, ?, 1, NOW())")) {
-                        error_log("Signup failed: unable to prepare opening activity.");
-                        mysqli_rollback($conn);
-                        finishRequest('/signup/?error=signupfailed', 'signupfailed');
-                    }
-                    $openingDescription = "Opening Balance";
-                    mysqli_stmt_bind_param($activityStmt, "isd", $userId, $openingDescription, $accountBalance);
-                    if (!mysqli_stmt_execute($activityStmt)) {
-                        error_log("Signup failed: unable to save opening activity.");
-                        mysqli_stmt_close($activityStmt);
-                        mysqli_rollback($conn);
-                        finishRequest('/signup/?error=signupfailed', 'signupfailed');
-                    }
-                    mysqli_stmt_close($activityStmt);
                     if (!mysqli_commit($conn)) {
                         error_log("Signup failed: unable to commit user.");
                         mysqli_rollback($conn);

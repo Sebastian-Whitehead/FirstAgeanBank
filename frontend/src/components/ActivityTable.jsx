@@ -14,7 +14,7 @@ export default function ActivityTable({ activities }) {
             const timestamp = new Date(String(activity.created_at).replace(' ', 'T'));
             return (
               <tr key={`${activity.created_at}-${index}`}>
-                <td>{activity.steamId || 'SteamID not set'}</td>
+                <td>{activity.account_number || 'Account not set'}</td>
                 <td><time dateTime={Number.isNaN(timestamp.getTime()) ? undefined : timestamp.toISOString()}>{Number.isNaN(timestamp.getTime()) ? activity.created_at : timestamp.toLocaleString()}</time></td>
                 <td>{activity.description}</td>
                 <td><span className={`amount-pill${positive ? ' amount-pill--positive' : ' amount-pill--negative'}`}>{positive ? '+' : '-'}{formatMoney(activity.amount)}</span></td>

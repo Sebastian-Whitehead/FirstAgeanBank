@@ -414,6 +414,94 @@ a {
   margin-bottom: 26px;
 }
 
+.page-heading--accounts {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.add-account-button {
+  display: inline-grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 3px 10px #00285224;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.add-account-button:hover {
+  background: var(--brand-dark);
+  transform: translateY(-1px);
+}
+
+.add-account-button span {
+  margin-top: -2px;
+  font-size: 2rem;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.add-account-button:focus-visible,
+.add-account-dialog__close:focus-visible {
+  outline: 3px solid #78a8eb;
+  outline-offset: 3px;
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: #10243d80;
+}
+
+.add-account-dialog {
+  position: relative;
+  width: min(460px, 100%);
+  padding: 30px;
+  box-shadow: 0 18px 60px #10243d40;
+}
+
+.add-account-dialog h2 {
+  margin: 0 0 8px;
+  color: #173b68;
+  font: 600 1.8rem Cormorant, Georgia, serif;
+}
+
+.add-account-dialog > .muted {
+  margin: 0 0 20px;
+}
+
+.add-account-dialog__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1.6rem;
+}
+
+.add-account-dialog__close:hover {
+  background: #edf2f7;
+  color: var(--ink);
+}
+
 .page-heading h1 {
   margin: 0 0 5px;
 }
@@ -430,6 +518,165 @@ a {
   gap: 28px;
   padding: 28px;
   border-top: 4px solid var(--brand);
+}
+
+.accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 18px;
+}
+
+.account-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 24px;
+  border-top: 4px solid var(--brand);
+}
+
+.account-card__heading {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.account-card__heading h2 {
+  margin: 0;
+  color: #173b68;
+  font: 600 1.45rem Cormorant, Georgia, serif;
+  overflow-wrap: anywhere;
+}
+
+.account-card__type {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #edf4fd;
+  color: #234b78;
+  font-size: 0.78rem;
+  text-transform: capitalize;
+}
+
+.account-card .account-number {
+  margin: 0 !important;
+}
+
+.account-card > .muted {
+  margin: -12px 0 0;
+}
+
+.account-card .account-balance {
+  margin-top: 8px;
+}
+
+.account-card > .button {
+  margin-top: auto;
+}
+
+.account-card__footer {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.account-card__footer > .button {
+  margin-top: 0;
+}
+
+.account-menu {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.account-menu__trigger {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 1px solid #d5deea;
+  border-radius: 50%;
+  background: #fff;
+  color: #234b78;
+  cursor: pointer;
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.account-menu__trigger:hover,
+.account-menu__trigger[aria-expanded="true"] {
+  background: #edf4fd;
+}
+
+.account-menu__items {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  z-index: 5;
+  display: grid;
+  min-width: 180px;
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid #dbe3ee;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 10px 28px #10243d26;
+}
+
+.account-menu__items button {
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.account-menu__items button:hover:not(:disabled) {
+  background: #edf4fd;
+}
+
+.account-menu__items button:disabled {
+  color: #8793a2;
+  cursor: not-allowed;
+}
+
+.account-menu__items .account-menu__delete {
+  color: #a42e38;
+}
+
+.account-menu__items .account-menu__delete:disabled {
+  color: #8793a2;
+}
+
+.account-menu__hint {
+  margin: 3px 8px 5px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.account-delete-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.button--danger {
+  border-color: #a42e38;
+  background: #a42e38;
+  color: #fff;
+}
+
+.button--danger:hover:not(:disabled) {
+  border-color: #85232c;
+  background: #85232c;
 }
 
 .account-summary p {
@@ -604,6 +851,67 @@ a {
 
 .transfer-from b {
   color: var(--brand);
+}
+
+.transfer-shortcuts {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.transfer-shortcuts legend {
+  margin-bottom: 8px;
+  color: #334155;
+  font-size: 0.91rem;
+  font-weight: 600;
+}
+
+.transfer-shortcuts__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.transfer-shortcut {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.transfer-shortcut:hover {
+  border-color: var(--brand);
+  background: #f4f8fe;
+}
+
+.transfer-shortcut--selected {
+  border-color: var(--brand);
+  background: #edf4fd;
+  box-shadow: 0 0 0 1px var(--brand);
+}
+
+.transfer-shortcut strong {
+  color: #173b68;
+  font-size: 0.9rem;
+}
+
+.transfer-shortcut span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.transfer-shortcut:focus-visible {
+  outline: 3px solid #78a8eb;
+  outline-offset: 2px;
 }
 
 .profile-grid {

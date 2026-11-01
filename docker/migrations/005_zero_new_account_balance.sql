@@ -1,0 +1,2 @@
+ALTER TABLE users
+  ALTER COLUMN accountBalance SET DEFAULT 0.00;

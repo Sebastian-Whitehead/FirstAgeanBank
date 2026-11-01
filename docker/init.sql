@@ -5,7 +5,7 @@ CREATE TABLE `users` (
   `pwdUsers` longtext NOT NULL,
   `firstname` text NOT NULL,
   `lastname` text NOT NULL,
-  `accountBalance` decimal(18,2) NOT NULL DEFAULT 500.00,
+  `accountBalance` decimal(18,2) NOT NULL DEFAULT 0.00,
   `steamId` char(17) DEFAULT NULL,
   `discordId` varchar(20) DEFAULT NULL,
   PRIMARY KEY (`idUsers`),

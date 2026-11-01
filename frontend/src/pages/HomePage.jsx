@@ -56,7 +56,7 @@ export default function HomePage() {
         <section className="home-hero">
           <div className="home-hero__copy">
             <p className="eyebrow">One federation. Three islands.</p>
-            <h1>{user ? `Welcome back, ${user.username}` : 'A brighter future across the Aegean Sea.'}</h1>
+            <h1>{user ? `Welcome back, ${user.firstname}` : 'A brighter future across the Aegean Sea.'}</h1>
             <p>First Agean Bank is proud to help keep our island communities connected, one neighbor and one voyage at a time.</p>
             {user && <Link className="button button--primary" to="/accounts/">Go to your accounts</Link>}
           </div>

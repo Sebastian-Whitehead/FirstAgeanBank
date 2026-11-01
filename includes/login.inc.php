@@ -28,17 +28,21 @@ if (isset($_POST['login-submit'])) {
                         'steamId' => $row['steamId'],
                         'discordId' => $row['discordId']
                     ];
-                    $syncedUserData = syncExternalUserOnLogin($loginUserData);
-                    $authenticatedUser = $syncedUserData === null
-                        ? $row
-                        : array_merge($row, $syncedUserData);
+                    if (preg_match('/^[0-9]{17}$/', (string)$row['steamId'])) {
+                        try {
+                            syncExternalUserOnLogin($loginUserData);
+                        } catch (SupabaseRequestException $error) {
+                            error_log('Login failed while checking the Supabase account: '.$error->getMessage());
+                            finishRequest('/?error=supabaseunavailable', 'supabaseunavailable');
+                        }
+                    }
 
                     session_start();
                     $_SESSION['userId'] = $row['idUsers'];
-                    $_SESSION['userUid'] = $authenticatedUser['uidUsers'];
-                    $_SESSION['firstname'] = $authenticatedUser['firstname'];
-                    $_SESSION['lastname'] = $authenticatedUser['lastname'];
-                    $_SESSION['steamId'] = $authenticatedUser['steamId'] ?? '';
+                    $_SESSION['userUid'] = $row['uidUsers'];
+                    $_SESSION['firstname'] = $row['firstname'];
+                    $_SESSION['lastname'] = $row['lastname'];
+                    $_SESSION['steamId'] = $row['steamId'] ?? '';
                     $_SESSION['sessionTimeStamp'] = time();
                     finishRequest('/accounts/?login=success');
                 } else {

@@ -68,12 +68,12 @@ export default function ProfilePage() {
       <div className="profile-grid">
         <section className="surface-card form-card">
           <p className="eyebrow">Connected accounts</p><h2>Platform IDs</h2>
-          <p className="muted">Your SteamID64 is also your account number.</p>
+          <p className="muted">Your SteamID64 links your profile to your shared player account.</p>
           <form className="form-stack" onSubmit={submitProfile}>
             <label>SteamID64<input name="steamid" inputMode="numeric" pattern="[0-9]{17}" minLength="17" maxLength="17" value={steamId} onChange={(event) => { setSteamId(event.target.value); setProfileSuccess(false); }} required /></label>
             <small>Enter your 17-digit Steam account ID.</small>
-            <label>Discord ID<input name="discordid" inputMode="numeric" pattern="[0-9]{17,20}" minLength="17" maxLength="20" value={discordId} onChange={(event) => { setDiscordId(event.target.value); setProfileSuccess(false); }} required /></label>
-            <small>Enter your 17–20 digit Discord user ID.</small>
+            <label>Discord ID<input name="discordid" inputMode="numeric" pattern="[0-9]{17,19}" minLength="17" maxLength="19" value={discordId} onChange={(event) => { setDiscordId(event.target.value); setProfileSuccess(false); }} required /></label>
+            <small>Enter your Discord user ID. It must fit the shared database's integer range.</small>
             <Message success={profileSuccess}>{profileMessage}</Message>
             <button className="button button--primary" disabled={busyProfile}>{busyProfile ? 'Saving…' : 'Save IDs'}</button>
           </form>

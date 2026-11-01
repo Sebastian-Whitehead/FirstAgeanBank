@@ -11,19 +11,17 @@ if (!isset($_SESSION['userId']) || !isset($_SESSION['sessionTimeStamp'])) {
 
 if (isset($_POST['profile-ids-submit'])) {
     $accountInfo = [
+        'oldSteamId' => $_SESSION['steamId'] ?? '',
+        'alias' => $_SESSION['userUid'] ?? '',
         'steamId' => trim($_POST['steamid'] ?? ''),
         'discordId' => trim($_POST['discordid'] ?? '')
     ];
-    $accountInfo = array_merge(
-        $accountInfo,
-        syncExternalAccountInfoUpdate($accountInfo) ?? []
-    );
     $steamId = $accountInfo['steamId'];
     $discordId = $accountInfo['discordId'];
     if (!preg_match('/^[0-9]{17}$/', $steamId)) {
         finishRequest('/accounts/update/?error=invalidsteamid', 'invalidsteamid');
     }
-    if (!preg_match('/^[0-9]{17,20}$/', $discordId)) {
+    if (!preg_match('/^[0-9]{17,20}$/', $discordId) || filter_var($discordId, FILTER_VALIDATE_INT) === false) {
         finishRequest('/accounts/update/?error=invaliddiscordid', 'invaliddiscordid');
     }
 
@@ -38,6 +36,16 @@ if (isset($_POST['profile-ids-submit'])) {
     mysqli_stmt_close($stmt);
     if ($steamIdTaken) {
         finishRequest('/accounts/update/?error=steamidtaken', 'steamidtaken');
+    }
+
+    try {
+        syncExternalAccountInfoUpdate($accountInfo);
+    } catch (SupabaseRequestException $error) {
+        error_log('Profile update failed while updating the Supabase identity: '.$error->getMessage());
+        $errorCode = $error->getSupabaseMessage() === 'steam_id_already_linked'
+            ? 'steamidtaken'
+            : 'supabaseunavailable';
+        finishRequest('/accounts/update/?error='.$errorCode, $errorCode);
     }
 
     $stmt = mysqli_prepare($conn, "UPDATE users SET steamId=?, discordId=? WHERE idUsers=?");

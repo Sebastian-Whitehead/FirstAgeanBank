@@ -11,6 +11,8 @@ services:
       DB_NAME: gulllebelle
       DB_USER: ${DB_USER:-gulllebelle}
       DB_PASSWORD: ${DB_PASSWORD:-gulllebelle-local}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
     depends_on:
       db:
         condition: service_healthy

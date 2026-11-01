@@ -4,3 +4,5 @@ assets/users/*
 /assets/Gull-le-Belle-records.zip
 /node_modules/
 /assets/react/
+.env
+.env.*
