@@ -7,6 +7,8 @@ This is a role-play (RP) fork of the original project, adapted for fictional in-
 ## Disclaimer
 This fictional role-play project is intended for local scambaiting and personal use only. Do not present it as a real financial institution or collect real financial information.
 
+On first visit, the site displays a required acknowledgement explaining that all balances and transactions are fictional role-play data and that no real money is held or transferred. The acknowledgement is remembered in the browser.
+
 ## Features
 * Fake bank account sign up
 * Transfer between accounts

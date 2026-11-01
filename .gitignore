@@ -6,3 +6,5 @@ assets/users/*
 /assets/react/
 .env
 .env.*
+.vscode/
+/AGENTS.md

@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import Footer from './components/Footer';
 import Navigation from './components/Navigation';
+import RoleplayNotice from './components/RoleplayNotice';
 import { useSession } from './contexts/SessionContext';
 import AccountsPage from './pages/AccountsPage';
 import ActivitiesPage from './pages/ActivitiesPage';
@@ -37,6 +38,7 @@ function AppLayout() {
         <Route path="*" element={<Navigate to={session.authenticated ? '/accounts/' : '/'} replace />} />
       </Routes>
       <Footer />
+      <RoleplayNotice />
     </>
   );
 }
