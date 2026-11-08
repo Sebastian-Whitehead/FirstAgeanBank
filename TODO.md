@@ -1,5 +1,20 @@
 # TODO
 
+- [ ] Replace First Agean Bank's local login with shared Supabase Auth
+  - [ ] Use the shared Supabase project as the authentication provider for First Agean Bank and the other websites; do not create a separate password store for each project.
+  - [ ] Keep the existing bank login and signup pages' visual design where practical, but change their behavior to sign in/register through Supabase Auth.
+  - [ ] Configure production and local development callback/redirect URLs in Supabase Auth, enable the selected sign-in provider(s), and configure production email delivery if email-based authentication is used.
+  - [ ] Link each Supabase Auth user (`auth.users.id`, UUID) to exactly one canonical `identities_player` row using a unique `auth_user_id` UUID foreign key. Keep Steam and Discord IDs in the shared identity record; do not duplicate them as separate bank identities.
+  - [ ] Define and implement a secure account-linking flow for existing players. Verify control of the existing account/identity before linking; never accept an arbitrary player ID, Steam ID, or Discord ID from the browser as proof of ownership.
+  - [ ] Plan existing-user migration without copying plaintext passwords or password hashes into Supabase. Determine how users will claim/link their current bank account (for example, verified identity linking followed by Supabase signup/password reset); preserve the existing bank account and activity data.
+  - [ ] Update the React frontend to use Supabase Auth sessions, sign-in, signup, sign-out, and session restoration. Add the required Supabase client dependency and expose only the project URL and publishable key in frontend configuration.
+  - [ ] Update PHP endpoints to validate Supabase access tokens server-side before serving or changing the signed-in user's bank data. Resolve the authenticated user to `identities_player`, then to the corresponding bank account; do not trust a submitted user/account ID.
+  - [ ] Keep the bank's domain data (bank account details, balance display, and `account_activities`) owned by First Agean Bank unless separately migrated. Authentication is shared; bank records remain project-specific.
+  - [ ] Decide whether balances and transfers remain local during this phase or are migrated to the shared economy service. Do not maintain independently writable copies of a balance across services.
+  - [ ] Enable Row Level Security on Supabase tables exposed to clients. Permit players to read only their own identity/profile data; perform identity linking and sensitive account/balance operations through trusted server-side code.
+  - [ ] Keep Supabase service-role credentials server-side only; never bundle them into the React app, commit them, or send them to browsers.
+  - [ ] Preserve the existing 15-minute inactivity behavior where appropriate, while handling Supabase token refresh/expiration and logout consistently.
+  - [ ] Test signup, login, logout, session restoration/expiration, password reset if enabled, identity linking, existing-user migration, unauthorized access, and bank account/transaction ownership. Verify that one shared player identity works across the bank, other websites, and the Discord bot without duplicating credentials.
 - Implement backend transfers to another user's account: validate the destination account number, securely identify the recipient and account type, update both users' balances atomically, and record the transfer in both users' activity histories.
 - Implement stock trading
 - Implement Admin Page
