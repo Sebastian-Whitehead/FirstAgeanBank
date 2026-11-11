@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Message from '../components/Message';
 import { useSession } from '../contexts/SessionContext';
-import { submitForm } from '../lib/api';
+import { signInWithIdentifier } from '../lib/auth';
 import { errorMessages, messageForError } from '../lib/errors';
 
 function LoginForm() {
@@ -11,9 +11,7 @@ function LoginForm() {
   const navigate = useNavigate();
   const [error, setLoginError] = useState(() => {
     const code = new URLSearchParams(location.search).get('error');
-    return code === 'sessionexpired'
-      ? 'Your session expired. Please sign in again.'
-      : (errorMessages[code] || '');
+    return errorMessages[code] || '';
   });
   const [busy, setBusy] = useState(false);
 
@@ -22,13 +20,11 @@ function LoginForm() {
     setLoginError('');
     setBusy(true);
     try {
-      const result = await submitForm('/includes/login.inc.php', event.currentTarget, 'login-submit');
-      if (result.success) {
-        await refresh();
-        navigate('/accounts/');
-      } else {
-        setLoginError(messageForError(result.error, 'Unable to log in. Please try again.'));
-      }
+      const formData = new FormData(event.currentTarget);
+      await signInWithIdentifier(formData.get('identifier'), formData.get('pwd'));
+      const result = await refresh();
+      if (result.authenticated) navigate('/accounts/');
+      else setLoginError(messageForError(result.error, 'Unable to load your player account.'));
     } catch (requestError) {
       setLoginError(requestError.message);
       setError(requestError.message);
@@ -39,8 +35,9 @@ function LoginForm() {
 
   return (
     <form className="form-stack" onSubmit={submit}>
-      <label>Username<input name="username" type="text" autoComplete="username" required /></label>
+      <label>Username or email<input name="identifier" type="text" autoComplete="username" required /></label>
       <label>Password<input name="pwd" type="password" autoComplete="current-password" required /></label>
+      <Link to="/forgot-password/">Forgot password?</Link>
       <Message>{error}</Message>
       <button className="button button--primary" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Log in'}</button>
       <Link className="button button--secondary" to="/signup/">Join us today</Link>

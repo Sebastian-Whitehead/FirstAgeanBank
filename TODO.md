@@ -9,7 +9,7 @@
   - [ ] Plan existing-user migration without copying plaintext passwords or password hashes into Supabase. Determine how users will claim/link their current bank account (for example, verified identity linking followed by Supabase signup/password reset); preserve the existing bank account and activity data.
   - [ ] Update the React frontend to use Supabase Auth sessions, sign-in, signup, sign-out, and session restoration. Add the required Supabase client dependency and expose only the project URL and publishable key in frontend configuration.
   - [ ] Update PHP endpoints to validate Supabase access tokens server-side before serving or changing the signed-in user's bank data. Resolve the authenticated user to `identities_player`, then to the corresponding bank account; do not trust a submitted user/account ID.
-  - [ ] Keep the bank's domain data (bank account details, balance display, and `account_activities`) owned by First Agean Bank unless separately migrated. Authentication is shared; bank records remain project-specific.
+  - [ ] Keep bank account, balance, and activity data in Supabase's existing economy tables and RPCs; do not reintroduce a local MariaDB data store.
   - [ ] Decide whether balances and transfers remain local during this phase or are migrated to the shared economy service. Do not maintain independently writable copies of a balance across services.
   - [ ] Enable Row Level Security on Supabase tables exposed to clients. Permit players to read only their own identity/profile data; perform identity linking and sensitive account/balance operations through trusted server-side code.
   - [ ] Keep Supabase service-role credentials server-side only; never bundle them into the React app, commit them, or send them to browsers.

@@ -9,6 +9,8 @@ import ActivitiesPage from './pages/ActivitiesPage';
 import HomePage from './pages/HomePage';
 import InvestmentsPage from './pages/InvestmentsPage';
 import ProfilePage from './pages/ProfilePage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import SignupPage from './pages/SignupPage';
 import TransferPage from './pages/TransferPage';
 
@@ -28,6 +30,8 @@ function AppLayout() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route element={<PrivateRoutes />}>
           <Route path="/accounts" element={<AccountsPage />} />
           <Route path="/accounts/update" element={<ProfilePage />} />

@@ -1,8 +1,13 @@
+import { getSupabaseClient } from './supabaseClient';
+
 export async function requestJson(url, options = {}) {
+  const { data: { session } } = await getSupabaseClient().auth.getSession();
+  const headers = { Accept: 'application/json', ...(options.headers || {}) };
+  if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
   const response = await fetch(url, {
     ...options,
     credentials: 'same-origin',
-    headers: { Accept: 'application/json', ...(options.headers || {}) }
+    headers
   });
   let data;
   try {

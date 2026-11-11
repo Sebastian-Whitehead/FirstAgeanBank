@@ -1,17 +1,13 @@
 <?php
 require 'external-db-sync.inc.php';
 require 'http-response.inc.php';
-session_start();
-require 'inactivity.php';
-
-if (!isset($_SESSION['userId']) || !isset($_SESSION['sessionTimeStamp'])) {
-    finishRequest('/', 'loggedout');
-}
+require 'auth.inc.php';
+$player = requireAuthenticatedPlayer();
 if (!isset($_POST['account-action-submit'])) {
     finishRequest('/accounts/');
 }
 
-$steamId = $_SESSION['steamId'] ?? '';
+$steamId = $player['steamId'];
 $action = $_POST['action'] ?? '';
 $accountNumberInput = $_POST['accountNumber'] ?? '';
 if (!preg_match('/^[0-9]{17}$/', $steamId)) {

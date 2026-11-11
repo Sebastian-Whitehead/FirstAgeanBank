@@ -1,22 +1,19 @@
 <?php
 require 'external-db-sync.inc.php';
 require 'http-response.inc.php';
-session_start();
-require 'inactivity.php';
+require 'auth.inc.php';
 
 function redirectTransferError(string $error): never
 {
     finishRequest('/transfer/?error='.$error, $error);
 }
 
-if (!isset($_SESSION['userId']) || !isset($_SESSION['sessionTimeStamp'])) {
-    finishRequest('/', 'loggedout');
-}
+$player = requireAuthenticatedPlayer();
 if (!isset($_POST['transfer-submit'])) {
     finishRequest('/transfer/');
 }
 
-$senderSteamId = $_SESSION['steamId'] ?? '';
+$senderSteamId = $player['steamId'];
 if (!preg_match('/^[0-9]{17}$/', $senderSteamId)) {
     redirectTransferError('steamidrequired');
 }

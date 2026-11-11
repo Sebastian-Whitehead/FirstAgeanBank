@@ -1,4 +1,10 @@
 export const errorMessages = {
+  authrequired: 'Use the sign-in form to authenticate with Supabase.',
+  authmanaged: 'Account authentication is managed by Supabase Auth.',
+  discordrequired: 'Your password sign-in succeeded, but this account still needs the Discord identity linked to your player account. Open signup to continue linking.',
+  identitynotfound: 'No existing player identity is linked to this Discord account.',
+  identityambiguous: 'The Discord ID matched more than one player identity. Contact an administrator.',
+  identityunavailable: 'The existing player identity is incomplete or has no available account.',
   emptyfields: 'Please fill in all required fields.',
   wrongpwd: 'The password is incorrect.',
   usernotfound: 'No account was found with those login details.',
