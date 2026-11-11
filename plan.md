@@ -1,33 +1,39 @@
 # Supabase Auth and Cloudflare Migration Plan
 
-This plan is split into two workstreams. Supabase Auth changes how users sign in; Cloudflare changes where the frontend and backend run. Existing users are test users only. Their player identities, accounts, balances, and transaction history are already in Supabase; the only data currently held locally that needs replacing is the bank login information. Do not re-import or recreate the existing player/economy data.
+This plan is split into two workstreams. Supabase Auth changes how users sign in; Cloudflare changes where the frontend and backend run. Existing users are test users only. Their player identities, accounts, balances, and transaction history are already in Supabase. Do not re-import or recreate the existing player/economy data.
+
+## Current status (2026-11-11)
+
+- Plan A's local implementation is complete and pushed on `feature/supabase-auth-cloudflare`. The React app uses Supabase Auth for email/password signup, username-or-email/password login, Discord OAuth sign-in, session management, password changes, and password recovery. A private Supabase username directory supports username login.
+- PHP validates Supabase access tokens and resolves the verified Discord ID read-only to exactly one existing player identity. Existing identity and economy data were not migrated, recreated, or modified by this work.
+- The app no longer runs MariaDB. At the user's request, the stopped legacy container and `gulllebelle_db-data` Docker volume were removed on 2026-11-11; its legacy rows were not imported.
+- Supabase dashboard configuration and full end-to-end auth verification remain. Manual identity linking was reported disabled; verify/enable it before resuming the email-signup-to-Discord-link flow. Confirm the local/production redirect allowlist and SMTP delivery, then test recovery and both sign-in methods. A Discord OAuth login that is not linked to the existing Auth user may create a separate Auth user; do not assume it merges accounts.
+- Plan B (Cloudflare deployment) has not started. The app still uses Apache/PHP locally.
 
 ## Plan A: Move login to shared Supabase Auth
 
 ### 1. Identity and credential decisions
 
-- Use the existing shared Supabase project and Auth service. Do not create another password store.
-- Collect a real email address at signup and use Supabase Auth's email/password credentials.
-- Let users sign in with either their username or email. Store the username-to-email directory in a private Supabase schema; never store passwords outside Supabase Auth.
-- Keep existing `identities_player`, accounts, balances, and transactions unchanged. Do not add an Auth foreign key to the identity table or create duplicate player identities.
-- Require Discord OAuth ownership verification during signup. The entered Discord ID must match the verified Discord identity and exactly one existing `identities_player` row.
+- Use the existing shared Supabase project and Auth service; do not create another password store. **Implemented.**
+- Signup collects email, username, display name, and password in Supabase Auth. Password login accepts username or email; a private Supabase directory maps usernames to emails. **Implemented.**
+- Keep existing `identities_player`, accounts, balances, and transactions unchanged. Do not add an Auth foreign key or create duplicate player identities. **Implemented as a read-only identity lookup.**
+- Signup verifies the entered Discord ID against the OAuth-verified identity and exactly one existing `identities_player` row. The home page also offers direct Discord OAuth sign-in, resolved against that existing player identity. **Implemented; end-to-end verification remains.**
 
 ### 2. Implement Auth and identity resolution
 
-- Use `@supabase/supabase-js` for password signup/sign-in, Discord identity linking, session restore/refresh, sign-out, and password changes.
-- Request only the Discord `identify` scope; do not request the Discord email scope.
-- Configure Supabase email confirmation/delivery as desired, enable manual identity linking, and allow only the application's configured callback URLs.
-- Send Supabase access tokens to the existing PHP API temporarily. The server validates each token with Supabase Auth, reads the verified linked Discord ID, and performs a read-only lookup of the existing player identity.
-- Keep all account/economy reads and mutations on the existing server-only `fab_*` RPC paths. Do not write to `identities_player` during signup or login.
-- Do not use a local database for application data. Supabase Auth stores credentials, a private Supabase schema stores the username-to-email directory, and the existing Supabase identity/economy data remains authoritative.
+- Use `@supabase/supabase-js` for password signup/sign-in, Discord OAuth/linking, session restore/refresh, sign-out, password changes, and password recovery. **Implemented.**
+- Discord identity linking requests `identify`; direct Discord OAuth sign-in requests `identify email`. **Implemented.**
+- Send Supabase access tokens to the PHP API. The server validates each token with Supabase Auth, reads the verified Discord ID, and performs a read-only lookup of the existing player identity. **Implemented.**
+- Keep account/economy reads and mutations on the existing server-only `fab_*` RPC paths. Signup and login do not write to `identities_player`. **Implemented.**
+- Do not use a local database for application data. Supabase Auth stores credentials, a private Supabase schema stores the username-to-email directory, and Supabase remains authoritative for player/economy data. **Implemented.**
 
 ### 3. Configure and verify
 
-- Configure the Supabase Discord provider, confirmation policy, Site URL, and local/production signup callback URLs.
-- Verify email confirmation, Discord OAuth redirects, and email/password sign-in against the configured Supabase Auth project.
-- Test signup with a matching and mismatched Discord ID, an unlinked Discord account, duplicate Discord identity, login, logout, refresh, password change, token expiry, and access to another player's data.
-- Verify that identity/economy rows are not changed and the same existing accounts and transaction history remain available.
-- Keep server-only service-role credentials out of frontend assets; only the Supabase URL and publishable key may be in the browser bundle.
+- [ ] Confirm Discord provider configuration, manual identity linking, Auth redirect allowlist, and Site URL in the Supabase dashboard. Manual linking was previously reported disabled.
+- [ ] Confirm SMTP delivery and test email confirmation and password recovery using the configured project.
+- [ ] Complete end-to-end tests for email/username login, Discord OAuth, signup linking with matching/mismatched IDs, logout, refresh, password update/reset, token expiry, and unauthorized player access.
+- [x] Keep service-role credentials server-side; only the Supabase URL and publishable key are used by the browser.
+- [x] Build the frontend, lint PHP auth/API handlers, and smoke-test local routes and sign-in UI. These do not replace the pending live Auth tests above.
 
 ### Completion criteria
 
@@ -74,7 +80,7 @@ This plan is split into two workstreams. Supabase Auth changes how users sign in
 - Deploy a preview environment first and run the full auth, identity-linking, account, transfer, history, and authorization test matrix against it.
 - Verify that frontend bundles contain no private key, protected API routes reject missing/invalid tokens, and a user cannot act on another player's identity or account.
 - Configure the production domain and Supabase redirect URLs, then deploy Pages/Functions.
-- Cut over only after test-user identity-link checks and end-to-end checks pass. Keep any pre-existing local MariaDB volume offline as a temporary backup until its obsolete rows are reviewed; the app must not mount or access it.
+- Cut over only after test-user identity-link checks and end-to-end checks pass. The obsolete local MariaDB container and volume were removed; do not expect or recreate them.
 - Monitor Worker errors/CPU/request usage, Supabase Auth and database usage, email delivery, and failed RPCs after launch.
 
 ### Completion criteria
@@ -86,8 +92,7 @@ This plan is split into two workstreams. Supabase Auth changes how users sign in
 
 ## Suggested order
 
-1. Configure Supabase email Auth and Discord OAuth for the existing project.
-2. Implement and validate email/username sign-in and read-only identity resolution locally.
-3. Inventory the API contract and port backend endpoints to TypeScript Functions/Workers.
-4. Deploy a Cloudflare preview and verify Auth plus all account/ledger behaviors.
-5. Cut over, verify each test account's identity link, and retire local credential authentication after a stable rollback window.
+1. Finish Supabase dashboard setup and end-to-end verification for the implemented local Auth flows.
+2. Inventory the API contract and port PHP endpoints to TypeScript Functions/Workers.
+3. Deploy a Cloudflare preview and verify Auth plus all account/ledger behaviors.
+4. Configure production callbacks and cut over only after each test account's identity link and critical flows pass.
