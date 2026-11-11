@@ -35,20 +35,15 @@ function currentAuthenticatedPlayer(): array
 
     $email = $authUser['email'] ?? '';
     $username = $authUser['user_metadata']['username'] ?? '';
-    if (
-        !is_string($email)
-        || !filter_var($email, FILTER_VALIDATE_EMAIL)
-        || !is_string($username)
-        || !preg_match('/^[a-z0-9]{1,64}$/', $username)
-    ) {
-        throw new AuthenticatedPlayerException('The account does not have a supported email and username.', 'loggedout');
-    }
+    $validEmail = is_string($email) && filter_var($email, FILTER_VALIDATE_EMAIL);
+    $validUsername = is_string($username) && preg_match('/^[a-z0-9]{1,64}$/', $username);
     $identities = $authUser['identities'] ?? [];
     if (!is_array($identities)) {
         throw new AuthenticatedPlayerException('Discord verification is required.', 'discordrequired');
     }
 
     $discordId = null;
+    $discordIdentityData = [];
     foreach ($identities as $identity) {
         if (!is_array($identity) || ($identity['provider'] ?? null) !== 'discord') {
             continue;
@@ -60,11 +55,21 @@ function currentAuthenticatedPlayer(): array
         $candidate = $identityData['sub'] ?? $identityData['id'] ?? null;
         if (is_int($candidate) || is_string($candidate)) {
             $discordId = (string)$candidate;
+            $discordIdentityData = $identityData;
             break;
         }
     }
     if ($discordId === null || !preg_match('/^[0-9]{17,19}$/', $discordId)) {
         throw new AuthenticatedPlayerException('Discord verification is required.', 'discordrequired');
+    }
+    if (!$validEmail) {
+        $identityEmail = $discordIdentityData['email'] ?? '';
+        $email = is_string($identityEmail) && filter_var($identityEmail, FILTER_VALIDATE_EMAIL)
+            ? $identityEmail
+            : '';
+    }
+    if (!$validUsername) {
+        $username = 'discord-'.$discordId;
     }
 
     try {
@@ -92,7 +97,11 @@ function currentAuthenticatedPlayer(): array
         'email' => $email,
         'firstname' => is_string($player['alias'] ?? null) && $player['alias'] !== ''
             ? $player['alias']
-            : $username,
+            : (is_string($discordIdentityData['global_name'] ?? null)
+                ? $discordIdentityData['global_name']
+                : (is_string($discordIdentityData['username'] ?? null)
+                    ? $discordIdentityData['username']
+                    : $username)),
         'steamId' => $steamId,
         'discordId' => $discordId
     ];

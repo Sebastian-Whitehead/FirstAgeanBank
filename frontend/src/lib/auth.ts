@@ -64,6 +64,17 @@ export async function signInWithIdentifier(identifier: string, password: string)
   if (error) throw error;
 }
 
+export async function signInWithDiscord(): Promise<void> {
+  const { error } = await getSupabaseClient().auth.signInWithOAuth({
+    provider: 'discord',
+    options: {
+      redirectTo: `${window.location.origin}/`,
+      scopes: 'identify email'
+    }
+  });
+  if (error) throw error;
+}
+
 export async function requestPasswordReset(email: string): Promise<void> {
   const normalizedEmail = normalizeEmail(email);
   const { error } = await getSupabaseClient().auth.resetPasswordForEmail(normalizedEmail, {

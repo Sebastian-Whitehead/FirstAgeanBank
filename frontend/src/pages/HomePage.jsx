@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Message from '../components/Message';
 import { useSession } from '../contexts/SessionContext';
-import { signInWithIdentifier } from '../lib/auth';
+import { signInWithDiscord, signInWithIdentifier } from '../lib/auth';
 import { errorMessages, messageForError } from '../lib/errors';
 
 function LoginForm() {
@@ -33,13 +33,41 @@ function LoginForm() {
     }
   }
 
+  async function submitDiscordSignIn() {
+    setLoginError('');
+    setBusy(true);
+    try {
+      await signInWithDiscord();
+    } catch (requestError) {
+      setLoginError(requestError.message);
+      setError(requestError.message);
+      setBusy(false);
+    }
+  }
+
   return (
     <form className="form-stack" onSubmit={submit}>
       <label>Username or email<input name="identifier" type="text" autoComplete="username" required /></label>
       <label>Password<input name="pwd" type="password" autoComplete="current-password" required /></label>
       <Link to="/forgot-password/">Forgot password?</Link>
       <Message>{error}</Message>
-      <button className="button button--primary" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Log in'}</button>
+      <div className="login-actions">
+        <button className="button button--primary" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Log in'}</button>
+        <button
+          className="button button--secondary discord-login-button"
+          type="button"
+          onClick={submitDiscordSignIn}
+          disabled={busy}
+          title="Continue with Discord"
+          aria-label="Continue with Discord"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24">
+            <path d="M6 4.5c2-.8 4-.5 6-.5s4-.3 6 .5c2.1 3.1 3.2 6.8 3.5 10.6-2 2-4 3.3-6.3 4l-1.2-2.1c.7-.3 1.3-.6 1.8-1.1-2.4 1.1-5.2 1.1-7.6 0 .5.5 1.1.8 1.8 1.1l-1.2 2.1c-2.3-.7-4.3-2-6.3-4C2.8 11.3 3.9 7.6 6 4.5Z" />
+            <circle cx="9.3" cy="11.8" r="1.3" fill="var(--surface)" />
+            <circle cx="14.7" cy="11.8" r="1.3" fill="var(--surface)" />
+          </svg>
+        </button>
+      </div>
       <Link className="button button--secondary" to="/signup/">Join us today</Link>
     </form>
   );
