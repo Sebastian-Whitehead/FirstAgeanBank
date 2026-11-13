@@ -87,8 +87,7 @@ export async function beginSignup(
   username: string,
   email: string,
   password: string,
-  displayName: string,
-  discordId: string
+  displayName: string
 ): Promise<boolean> {
   const client = getSupabaseClient();
   const normalizedUsername = normalizeUsername(username);
@@ -99,14 +98,10 @@ export async function beginSignup(
   if (!normalizedDisplayName || normalizedDisplayName.length > 100) {
     throw new Error('Enter a name no longer than 100 characters.');
   }
-  if (!/^[0-9]{17,19}$/.test(discordId)) {
-    throw new Error('Enter a valid Discord user ID.');
-  }
   const normalizedEmail = normalizeEmail(email);
   localStorage.setItem(pendingSignupKey, JSON.stringify({
     username: normalizedUsername,
-    email: normalizedEmail,
-    discordId
+    email: normalizedEmail
   }));
   const { data, error } = await client.auth.signUp({
     email: normalizedEmail,
@@ -124,22 +119,16 @@ export async function beginSignup(
     throw error;
   }
   if (!data.session) return false;
-  const isDiscordLinked = await continuePendingSignup(
-    client,
-    normalizedUsername,
-    normalizedEmail,
-    discordId
-  );
+  const isDiscordLinked = await continuePendingSignup(client, normalizedUsername, normalizedEmail);
   if (!isDiscordLinked) return true;
-  await finishPendingSignup(client, normalizedUsername, normalizedEmail, discordId);
+  await finishPendingSignup(client, normalizedUsername, normalizedEmail);
   return true;
 }
 
 async function continuePendingSignup(
   client: ReturnType<typeof getSupabaseClient>,
   username: string,
-  email: string,
-  discordId: string
+  email: string
 ): Promise<boolean> {
   const { data, error } = await client.auth.getUser();
   if (error) throw error;
@@ -150,13 +139,8 @@ async function continuePendingSignup(
   ) {
     throw new Error('The authenticated account does not match the pending signup.');
   }
-  const linkedDiscordId = discordIdForUser(data.user);
-  if (linkedDiscordId === discordId) {
-    return true;
-  }
-  if (linkedDiscordId) {
-    throw new Error('This username is already linked to a different Discord account.');
-  }
+  // Already linked: the server decides whether this Discord ID maps to a player.
+  if (discordIdForUser(data.user)) return true;
 
   const { data: linkData, error: linkError } = await client.auth.linkIdentity({
     provider: 'discord',
@@ -166,6 +150,14 @@ async function continuePendingSignup(
     if (linkError.message.toLowerCase().includes('manual linking is disabled')) {
       throw new Error(
         'Discord linking is disabled in this Supabase project. Enable manual identity linking in the Supabase Auth settings, then return to this page to continue signup.'
+      );
+    }
+    if (
+      (linkError as { code?: string }).code === 'identity_already_exists'
+      || linkError.message.toLowerCase().includes('already linked')
+    ) {
+      throw new Error(
+        'That Discord account is already attached to another sign-in. Sign in with Discord from the home page instead.'
       );
     }
     throw linkError;
@@ -178,8 +170,7 @@ async function continuePendingSignup(
 async function finishPendingSignup(
   client: ReturnType<typeof getSupabaseClient>,
   username: string,
-  email: string,
-  discordId: string
+  email: string
 ): Promise<void> {
   const { data, error } = await client.auth.getUser();
   if (error) throw error;
@@ -190,8 +181,8 @@ async function finishPendingSignup(
   ) {
     throw new Error('The authenticated account does not match the pending signup.');
   }
-  if (discordIdForUser(data.user) !== discordId) {
-    throw new Error('Discord verification did not match the ID entered during signup.');
+  if (!discordIdForUser(data.user)) {
+    throw new Error('Discord verification did not complete. Please try connecting Discord again.');
   }
 
   const result = await requestJson('/api/state.php');
@@ -226,9 +217,10 @@ export async function completePendingSignup(): Promise<'none' | 'awaiting-email'
   const pendingSignup = localStorage.getItem(pendingSignupKey);
   if (!pendingSignup) return 'none';
 
-  let pending: { username: string; email: string; discordId: string };
+  let pending: { username: string; email: string };
   try {
     pending = JSON.parse(pendingSignup);
+    if (typeof pending.username !== 'string' || typeof pending.email !== 'string') throw new Error();
   } catch {
     localStorage.removeItem(pendingSignupKey);
     throw new Error('The pending signup could not be read. Please start again.');
@@ -242,16 +234,10 @@ export async function completePendingSignup(): Promise<'none' | 'awaiting-email'
   const isDiscordLinked = await continuePendingSignup(
     client,
     pending.username,
-    normalizeEmail(pending.email),
-    pending.discordId
+    normalizeEmail(pending.email)
   );
   if (!isDiscordLinked) return 'awaiting-email';
-  await finishPendingSignup(
-    client,
-    pending.username,
-    normalizeEmail(pending.email),
-    pending.discordId
-  );
+  await finishPendingSignup(client, pending.username, normalizeEmail(pending.email));
   return 'completed';
 }
 

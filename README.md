@@ -62,7 +62,7 @@ The Supabase migrations, including the private username directory, are versioned
 ## How to use
 
 ### Sign up
-Choose a username, email address, and password, enter the Discord ID already present on your player identity, then authorize the Discord connection. Confirm your email if Supabase requires it. The app checks that the OAuth-verified Discord ID matches the entered ID and exactly one existing player identity. Sign in using either your username or email and password.
+Choose a username, email address, and password, then authorize the Discord connection. Confirm your email if Supabase requires it. The app checks that the OAuth-verified Discord ID matches exactly one existing player identity. Sign in using either your username or email and password.
 The Accounts page displays active player accounts on that existing identity; account numbers and balances are managed by Supabase. Archiving an account hides it from active account state while preserving transaction history.
 ### Transaction history
 Recent activities are read from `economy.transactions` and `economy.transactions_entries` in Supabase.

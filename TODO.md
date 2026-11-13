@@ -21,3 +21,4 @@
 - Loans
 - Credit
 - Transaction descriptions in the main DB
+- Add a handler for signup when the verified Discord ID has no matching `identities_player` row (`identitynotfound`): show a clear message, let the user retry/unlink Discord, and clear the stuck `fab.pendingSignup` entry so revisiting `/signup/` does not keep showing the same error.

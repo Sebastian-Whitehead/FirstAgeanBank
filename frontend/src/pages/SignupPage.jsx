@@ -50,8 +50,7 @@ export default function SignupPage() {
         formData.get('uid'),
         formData.get('email'),
         password,
-        formData.get('displayName'),
-        formData.get('discordid')
+        formData.get('displayName')
       );
       setAwaitingEmail(!completed);
     } catch (requestError) {
@@ -78,15 +77,14 @@ export default function SignupPage() {
     <main className="form-page">
       <section className="surface-card form-card form-card--wide">
         <p className="eyebrow">Get started</p><h1>Create your account</h1>
-        <p className="muted">Choose a username and password, provide your email, then verify the Discord account already linked to your player identity.</p>
+        <p className="muted">Choose a username and password, provide your email, then connect the Discord account already linked to your player identity.</p>
         <form className="form-stack" onSubmit={submit}>
           <label>Username<input name="uid" autoComplete="username" pattern="[A-Za-z0-9]+" maxLength="64" required /></label>
           <label>Name<input name="displayName" autoComplete="name" maxLength="100" required /></label>
           <label>Email address<input name="email" type="email" autoComplete="email" maxLength="254" required /></label>
           <label>Password<input name="pwd" type="password" minLength="6" autoComplete="new-password" required /></label>
           <label>Repeat password<input name="confirmPwd" type="password" minLength="6" autoComplete="new-password" required /></label>
-          <label>Discord ID<input name="discordid" inputMode="numeric" pattern="[0-9]{17,19}" minLength="17" maxLength="19" placeholder="Your Discord user ID" required /></label>
-          <small>Discord will ask you to authorize the link. The entered ID must match your verified Discord account.</small>
+          <small>After creating your account, Discord will ask you to authorize the link. The Discord account you authorize must already be linked to your player identity.</small>
           {awaitingEmail && (
             <>
               <Message success>

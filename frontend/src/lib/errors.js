@@ -10,7 +10,6 @@ export const errorMessages = {
   usernotfound: 'No account was found with those login details.',
   invalidsteamid: 'SteamID64 must be exactly 17 digits.',
   steamidtaken: 'That SteamID64 is already registered.',
-  invaliddiscordid: 'Enter a 17 to 19 digit Discord ID that fits the shared database range.',
   invaliduid: 'Username may only contain letters and numbers.',
   uidtaken: 'That username is already taken.',
   passwordcheck: 'Passwords do not match.',

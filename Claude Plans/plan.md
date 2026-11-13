@@ -17,7 +17,7 @@ This plan is split into two workstreams. Supabase Auth changes how users sign in
 - Use the existing shared Supabase project and Auth service; do not create another password store. **Implemented.**
 - Signup collects email, username, display name, and password in Supabase Auth. Password login accepts username or email; a private Supabase directory maps usernames to emails. **Implemented.**
 - Keep existing `identities_player`, accounts, balances, and transactions unchanged. Do not add an Auth foreign key or create duplicate player identities. **Implemented as a read-only identity lookup.**
-- Signup verifies the entered Discord ID against the OAuth-verified identity and exactly one existing `identities_player` row. The home page also offers direct Discord OAuth sign-in, resolved against that existing player identity. **Implemented; end-to-end verification remains.**
+- Signup verifies the OAuth-verified Discord ID against exactly one existing `identities_player` row (no manual Discord ID entry). The home page also offers direct Discord OAuth sign-in, resolved against that existing player identity. **Implemented; end-to-end verification remains.**
 
 ### 2. Implement Auth and identity resolution
 
@@ -31,7 +31,7 @@ This plan is split into two workstreams. Supabase Auth changes how users sign in
 
 - [ ] Confirm Discord provider configuration, manual identity linking, Auth redirect allowlist, and Site URL in the Supabase dashboard. Manual linking was previously reported disabled.
 - [ ] Confirm SMTP delivery and test email confirmation and password recovery using the configured project.
-- [ ] Complete end-to-end tests for email/username login, Discord OAuth, signup linking with matching/mismatched IDs, logout, refresh, password update/reset, token expiry, and unauthorized player access.
+- [ ] Complete end-to-end tests for email/username login, Discord OAuth, signup linking with a Discord account that does / does not map to a player identity, logout, refresh, password update/reset, token expiry, and unauthorized player access.
 - [x] Keep service-role credentials server-side; only the Supabase URL and publishable key are used by the browser.
 - [x] Build the frontend, lint PHP auth/API handlers, and smoke-test local routes and sign-in UI. These do not replace the pending live Auth tests above.
 
