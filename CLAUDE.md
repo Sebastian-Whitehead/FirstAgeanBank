@@ -11,12 +11,13 @@ Read `AGENTS.md` (imported above) first. It is the source of truth for project r
 - Never run `docker compose down -v`.
 
 ## Reference snapshots
-- `schema/`: Markdown dump of the live Supabase DB, one file per schema (`auth.md`, `public.md`, `economy.md`, `military.md`). Check here for table/column names before writing SQL, RPCs, or migrations. It's a snapshot; `supabase/migrations/` is the change history.
-- `graphify-out/`: graphify knowledge graph of the codebase. Start with `GRAPH_REPORT.md` (communities, core nodes); `graph.json` is the full graph. Use `/graphify` to query or rebuild it. It can be stale after big changes.
+- `schema/` (gitignored, local only): Markdown dump of the live Supabase DB, one file per schema (`auth.md`, `public.md`, `economy.md`, `military.md`). Check here for table/column names before writing SQL, RPCs, or migrations. It's a snapshot; `supabase/migrations/` is the change history.
+- `graphify-out/` (gitignored, local only): graphify knowledge graph of the codebase. Start with `GRAPH_REPORT.md` (communities, core nodes); `graph.json` is the full graph. Use `/graphify` to query or rebuild it. It can be stale after big changes.
 
 ## Plan files
-- `plan.md`: Supabase Auth + Cloudflare migration plan and its status. Update its status lines when a change affects what it describes.
-- `discord-id-removal-plan.md`: plan to remove the manual Discord ID field from signup.
+`Claude Plans/` is gitignored (local only).
+- `Claude Plans/plan.md`: Supabase Auth + Cloudflare migration plan and its status. Update its status lines when a change affects what it describes.
+- `Claude Plans/cloudflare-migration/`: step-by-step Worker migration plan; `Claude Plans/completed/`: finished plans.
 - `TODO.md`: longer-term backlog.
 
 ## Auth / identity flow (where to look)
@@ -25,7 +26,7 @@ Read `AGENTS.md` (imported above) first. It is the source of truth for project r
 - Server: `worker/src/auth.ts` (production) and `includes/auth.inc.php` (PHP fallback) validate the Supabase access token, reads the Discord ID from the token user's **verified** `discord` identity, and resolves exactly one `identities_player` row via `supabaseFindPlayersByDiscordId` (`includes/supabase.inc.php`). Never trust a Discord/Steam/player ID sent from the browser.
 - `api/state.php` returns the session/player state. `api/username-link.php` and `api/username-login.php` manage the private username→email directory.
 - Error codes from PHP map to user messages in `frontend/src/lib/errors.js`.
-- Legacy PHP form handlers (for example `includes/signup.inc.php`) are stubs that return 410. Don't revive them.
+- The legacy PHP form handlers (login, logout, signup, update) were removed. Don't revive them.
 
 ## Style
 - Make small, surgical edits that match the surrounding code. Don't do unrelated cleanup or reformatting.

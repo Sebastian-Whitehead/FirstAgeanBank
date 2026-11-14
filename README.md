@@ -84,12 +84,5 @@ Recent activities are read from `economy.transactions` and `economy.transactions
 ### Painful load
 Moved to [Painful_Load](https://github.com/lahrence/Painful-Load).
 
-### Optional archives
-The `Search_Spoof` extension and `Gull-le-Belle-records` archive are not included in this public fork.
-
 ## Extra
 The site is available only on the local computer at [http://localhost:8080](http://localhost:8080).
-
-## Experimental Features and Details
-* **Download button** When enabled (by going into 'setup.json' and changing `downloadButton` to true), users can have a custom button that, when clicked, downloads a file of their choosing.
-* **setup.json** setup.json is a new JSON file used to enable/disable editable features (very short list at the moment).
