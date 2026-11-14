@@ -1,8 +1,8 @@
-name: first-agean-bank
+name: first-aegean-bank
 
 services:
   web:
-    container_name: first-agean-bank-web
+    container_name: first-aegean-bank-web
     build:
       context: .
       args:

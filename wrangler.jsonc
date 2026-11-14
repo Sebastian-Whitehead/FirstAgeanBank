@@ -1,0 +1,16 @@
+{
+  "name": "first-aegean-bank",
+  "main": "worker/src/index.ts",
+  "compatibility_date": "2026-11-13",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "observability": { "enabled": true },
+  "vars": {
+    "SUPABASE_URL": "https://rjakbhfokyjoujqlijqn.supabase.co",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_NCU-j5WEyV2YZ20MwcAlsw_vJv7YTqb"
+  }
+}

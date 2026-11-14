@@ -5,8 +5,8 @@ import { useSession } from '../contexts/SessionContext';
 function Brand() {
   return (
     <Link className="brand" to="/">
-      <img src="/assets/png/first-agean-bank.png" alt="" />
-      <span>First Agean <b>Bank</b></span>
+      <img src="/assets/png/first-aegean-bank.png" alt="" />
+      <span>First Aegean <b>Bank</b></span>
     </Link>
   );
 }

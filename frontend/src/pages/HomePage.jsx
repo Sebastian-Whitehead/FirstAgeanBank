@@ -82,7 +82,7 @@ export default function HomePage() {
           <div className="home-hero__copy">
             <p className="eyebrow">One federation. Three islands.</p>
             <h1>{user ? `Welcome back, ${user.firstname}` : 'A brighter future across the Aegean Sea.'}</h1>
-            <p>First Agean Bank is proud to help keep our island communities connected, one neighbor and one voyage at a time.</p>
+            <p>First Aegean Bank is proud to help keep our island communities connected, one neighbor and one voyage at a time.</p>
             {user && <Link className="button button--primary" to="/accounts/">Go to your accounts</Link>}
           </div>
           {!user && (
@@ -113,7 +113,7 @@ export default function HomePage() {
         <section className="home-section" id="fraud">
           <div className="section-inner section-inner--narrow">
             <p className="eyebrow">Stay safe</p><h2>Keep your account in safe harbor</h2>
-            <p>Your account is yours alone. Never share your password or one-time codes. First Agean Bank will never ask you to pay a fee with gift cards or send money to “protect” your balance. If a request feels suspicious, pause and verify it independently.</p>
+            <p>Your account is yours alone. Never share your password or one-time codes. First Aegean Bank will never ask you to pay a fee with gift cards or send money to “protect” your balance. If a request feels suspicious, pause and verify it independently.</p>
           </div>
         </section>
         <section className="home-section home-section--blue" id="banks">

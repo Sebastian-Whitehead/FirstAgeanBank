@@ -51,7 +51,7 @@ export default function RoleplayNotice() {
         <p className="roleplay-notice__eyebrow">Important notice · fictional role-play only</p>
         <h1 id="roleplay-notice-title">This is not a real bank</h1>
         <p id="roleplay-notice-description">
-          First Agean Bank is a fictional role-play website. All accounts, balances, transfers, and
+          First Aegean Bank is a fictional role-play website. All accounts, balances, transfers, and
           transactions shown here are game data and do not represent real-world money. No real
           money is held, sent, or insured by this site.
         </p>

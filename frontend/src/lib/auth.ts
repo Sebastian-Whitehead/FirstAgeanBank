@@ -43,7 +43,7 @@ export async function signInWithIdentifier(identifier: string, password: string)
   if (!validUsername(username)) {
     throw new Error('Enter your username or email address.');
   }
-  const result = await requestJson('/api/username-login.php', {
+  const result = await requestJson('/api/username-login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password })
@@ -185,14 +185,14 @@ async function finishPendingSignup(
     throw new Error('Discord verification did not complete. Please try connecting Discord again.');
   }
 
-  const result = await requestJson('/api/state.php');
+  const result = await requestJson('/api/state');
   if (!result.authenticated) throw playerLookupError(result);
   await registerUsernameEmail();
   localStorage.removeItem(pendingSignupKey);
 }
 
 async function registerUsernameEmail(): Promise<void> {
-  const result = await requestJson('/api/username-link.php', {
+  const result = await requestJson('/api/username-link', {
     method: 'POST'
   });
   if (!result.success) {

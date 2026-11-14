@@ -52,7 +52,7 @@ export default function AccountsPage() {
     setAccountError('');
     setCreatingAccount(true);
     try {
-      const result = await submitForm('/includes/create-account.inc.php', event.currentTarget, 'create-account-submit');
+      const result = await submitForm('/api/accounts/create', event.currentTarget, 'create-account-submit');
       if (result.success) {
         setAccountName('');
         setDialogOpen(false);
@@ -89,7 +89,7 @@ export default function AccountsPage() {
     setAccountActionBusy(true);
     try {
       const result = await submitForm(
-        '/includes/account-action.inc.php',
+        '/api/accounts/action',
         event.currentTarget,
         'account-action-submit',
         {

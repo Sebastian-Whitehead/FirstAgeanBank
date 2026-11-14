@@ -8,7 +8,7 @@ This plan is split into two workstreams. Supabase Auth changes how users sign in
 - PHP validates Supabase access tokens and resolves the verified Discord ID read-only to exactly one existing player identity. Existing identity and economy data were not migrated, recreated, or modified by this work.
 - The app no longer runs MariaDB. At the user's request, the stopped legacy container and `gulllebelle_db-data` Docker volume were removed on 2026-11-11; its legacy rows were not imported.
 - Supabase dashboard configuration and full end-to-end auth verification remain. Manual identity linking was reported disabled; verify/enable it before resuming the email-signup-to-Discord-link flow. Confirm the local/production redirect allowlist and SMTP delivery, then test recovery and both sign-in methods. A Discord OAuth login that is not linked to the existing Auth user may create a separate Auth user; do not assume it merges accounts.
-- Plan B (Cloudflare deployment) has not started. The app still uses Apache/PHP locally.
+- Plan B (Cloudflare deployment): done on 2026-11-14 as a Worker with Static Assets, deployed to the `workers.dev` URL (no custom domain yet). Steps 01-16 of `Claude Plans/cloudflare-migration/` are complete; live test results are in `test-results-2026-11-14.md`. The app still uses Apache/PHP locally as a fallback. As of 2026-11-13, Plan B is broken into step-by-step tasks in `Claude Plans/cloudflare-migration/` (start at `00-overview.md`). Those files supersede the Plan B outline below where they differ. The main differences are: a single Worker with Static Assets instead of Pages Functions, and PHP/Docker kept as a local fallback.
 
 ## Plan A: Move login to shared Supabase Auth
 
@@ -43,6 +43,8 @@ This plan is split into two workstreams. Supabase Auth changes how users sign in
 - No service-role key or private credential is present in frontend assets or repository history.
 
 ## Plan B: Prepare and deploy on Cloudflare Free
+
+> The detailed, step-by-step version of this plan is in [cloudflare-migration/00-overview.md](cloudflare-migration/00-overview.md). Track progress there.
 
 ### 1. Define the deployment shape
 

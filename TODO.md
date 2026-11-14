@@ -1,7 +1,7 @@
 # TODO
 
-- [ ] Replace First Agean Bank's local login with shared Supabase Auth
-  - [ ] Use the shared Supabase project as the authentication provider for First Agean Bank and the other websites; do not create a separate password store for each project.
+- [ ] Replace First Aegean Bank's local login with shared Supabase Auth
+  - [ ] Use the shared Supabase project as the authentication provider for First Aegean Bank and the other websites; do not create a separate password store for each project.
   - [ ] Keep the existing bank login and signup pages' visual design where practical, but change their behavior to sign in/register through Supabase Auth.
   - [ ] Configure production and local development callback/redirect URLs in Supabase Auth, enable the selected sign-in provider(s), and configure production email delivery if email-based authentication is used.
   - [ ] Link each Supabase Auth user (`auth.users.id`, UUID) to exactly one canonical `identities_player` row using a unique `auth_user_id` UUID foreign key. Keep Steam and Discord IDs in the shared identity record; do not duplicate them as separate bank identities.
@@ -22,3 +22,10 @@
 - Credit
 - Transaction descriptions in the main DB
 - Add a handler for signup when the verified Discord ID has no matching `identities_player` row (`identitynotfound`): show a clear message, let the user retry/unlink Discord, and clear the stuck `fab.pendingSignup` entry so revisiting `/signup/` does not keep showing the same error.
+- Supabase Free pauses inactive projects (about 7 days without activity). Before hosting publicly, decide how to handle it: keep it active, upgrade, or accept the downtime.
+- Configure custom SMTP in Supabase Auth. The built-in sender is rate-limited and only delivers to project team members, so real users won't get signup-confirmation or password-reset emails until this is done.
+- Enable manual identity linking in the Supabase dashboard (needed for the signup → Discord link flow), then run the pending end-to-end auth tests in `Claude Plans/plan.md`.
+- Add a GitHub Actions workflow that runs `npm test`, `npx tsc -p worker` and `npm run build` on push (once the Cloudflare Worker from `Claude Plans/cloudflare-migration/` exists).
+- Add a Content-Security-Policy for the Cloudflare deployment (needs the TradingView widget and Supabase allowlisted; see step 01 of the Cloudflare migration plan).
+- Decide on a custom domain for the Cloudflare deployment. Then add it under Workers -> Domains & Routes and add `https://<domain>/**` to the Supabase Redirect URLs (Site URL too).
+- Consider a Cloudflare rate-limit rule for `/api/username-login` (currently relies on Supabase Auth limits).

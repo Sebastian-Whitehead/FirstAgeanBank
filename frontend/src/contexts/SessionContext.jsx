@@ -35,7 +35,7 @@ export function SessionProvider({ children }) {
       return { authenticated: false };
     }
     const previouslyAuthenticated = hadAuthenticatedSession.current;
-    const data = await requestJson('/api/state.php');
+    const data = await requestJson('/api/state');
     setSession({ loading: false, ...data });
     hadAuthenticatedSession.current = Boolean(data.authenticated);
     if (data.error === 'loggedout') {

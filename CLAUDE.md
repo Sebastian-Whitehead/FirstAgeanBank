@@ -5,8 +5,8 @@
 Read `AGENTS.md` (imported above) first. It is the source of truth for project rules. These are extra working notes.
 
 ## Environment
-- Windows host; the Bash tool is Git Bash, and PowerShell is also available. The app runs in Docker at `http://localhost:8080`.
-- Build: `npm run build` from the repo root (runs `vite build --config frontend/vite.config.js frontend`). There are no automated tests and no linter/type-check step. Vite strips TypeScript in `frontend/src/lib/*.ts` without type-checking, so review TS changes by reading/grepping.
+- Windows host; the Bash tool is Git Bash, and PowerShell is also available. The primary local server is `npm run cf:dev` (wrangler dev) on `http://localhost:8787`. The PHP + Docker fallback runs at `http://localhost:8080`.
+- Build: `npm run build` from the repo root (runs `vite build --config frontend/vite.config.js frontend`). Worker tests: `npm test` (Vitest, no network) and `npx tsc -p worker`. There is no linter and no type-check for the frontend. Vite strips TypeScript in `frontend/src/lib/*.ts` without type-checking, so review TS changes by reading/grepping.
 - PHP syntax check (if PHP is available, or inside the container): `php -l <file>`.
 - Never run `docker compose down -v`.
 
@@ -22,7 +22,7 @@ Read `AGENTS.md` (imported above) first. It is the source of truth for project r
 ## Auth / identity flow (where to look)
 - Frontend auth logic: `frontend/src/lib/auth.ts` (Supabase password signup/login, Discord OAuth sign-in, `linkIdentity` during signup, pending-signup state in `localStorage['fab.pendingSignup']`). `frontend/src/lib/supabaseClient.ts` creates the browser client with the publishable key only.
 - Signup UI: `frontend/src/pages/SignupPage.jsx`. Login UI and "Continue with Discord": `frontend/src/pages/HomePage.jsx`.
-- Server: `includes/auth.inc.php` validates the Supabase access token, reads the Discord ID from the token user's **verified** `discord` identity, and resolves exactly one `identities_player` row via `supabaseFindPlayersByDiscordId` (`includes/supabase.inc.php`). Never trust a Discord/Steam/player ID sent from the browser.
+- Server: `worker/src/auth.ts` (production) and `includes/auth.inc.php` (PHP fallback) validate the Supabase access token, reads the Discord ID from the token user's **verified** `discord` identity, and resolves exactly one `identities_player` row via `supabaseFindPlayersByDiscordId` (`includes/supabase.inc.php`). Never trust a Discord/Steam/player ID sent from the browser.
 - `api/state.php` returns the session/player state. `api/username-link.php` and `api/username-login.php` manage the private username→email directory.
 - Error codes from PHP map to user messages in `frontend/src/lib/errors.js`.
 - Legacy PHP form handlers (for example `includes/signup.inc.php`) are stubs that return 410. Don't revive them.

@@ -84,7 +84,7 @@ export default function InvestmentsPage() {
   return (
     <main className="page-container investments-page">
       <header className="investments-intro">
-        <p className="eyebrow">First Agean Bank</p>
+        <p className="eyebrow">First Aegean Bank</p>
         <h1>Investment Center</h1>
         <p>Follow global indices, currencies, bonds, futures, and stocks.</p>
         <p className="disclaimer">Market information is provided by TradingView for informational and role-play purposes only. It is not investment advice or a banking service.</p>

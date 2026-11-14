@@ -8,3 +8,6 @@ assets/users/*
 .env.*
 .vscode/
 /AGENTS.md
+/dist/
+.dev.vars
+.wrangler/

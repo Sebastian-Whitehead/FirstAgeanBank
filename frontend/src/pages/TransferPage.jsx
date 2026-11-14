@@ -27,7 +27,7 @@ export default function TransferPage() {
     const requestKey = idempotencyKey || window.crypto.randomUUID();
     try {
       const result = await submitForm(
-        '/includes/transfer.inc.php',
+        '/api/transfer',
         event.currentTarget,
         'transfer-submit',
         {

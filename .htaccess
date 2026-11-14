@@ -1,4 +1,12 @@
 ErrorDocument 404 /assets/error-html/404.html
 
 RewriteEngine On
+
+RewriteRule ^api/state/?$ /api/state.php [L,QSA]
+RewriteRule ^api/username-login/?$ /api/username-login.php [L,QSA]
+RewriteRule ^api/username-link/?$ /api/username-link.php [L,QSA]
+RewriteRule ^api/accounts/create/?$ /includes/create-account.inc.php [L,QSA]
+RewriteRule ^api/accounts/action/?$ /includes/account-action.inc.php [L,QSA]
+RewriteRule ^api/transfer/?$ /includes/transfer.inc.php [L,QSA]
+
 RewriteRule ^(accounts/update|accounts|transfer|activities/all|activities|investments|signup|forgot-password|reset-password)(/.*)?$ /index.html [L,QSA]

@@ -19,7 +19,22 @@ On first visit, the site displays a required acknowledgement explaining that all
 
 The React application is organized by responsibility: route-level pages live in `frontend/src/pages`, shared UI in `frontend/src/components`, and session/API helpers in `frontend/src/contexts` and `frontend/src/lib`. `frontend/src/main.jsx` is the small application entry point; routes are composed in `frontend/src/App.jsx`.
 
-## How to setup
+## Hosting on Cloudflare (production)
+The site runs as a single Cloudflare Worker (`worker/src/`) that serves the built React app as static assets and handles `/api/*`. It fits the Workers Free plan. Supabase remains the source of truth.
+
+```
+npm install
+npm test
+cp .dev.vars.example .dev.vars   # fill in the Supabase values for local dev
+npm run cf:dev                    # http://localhost:8787
+npx wrangler login
+npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+npm run cf:deploy
+```
+`VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` must be set (for example in `frontend/.env.local`) when building. Public values for the Worker go in `wrangler.jsonc` `vars`; the service-role key is only ever a Worker secret. Add the deployed URL (`https://<worker>.<subdomain>.workers.dev/**`) to Supabase Authentication -> URL Configuration.
+
+## How to setup (Docker, local fallback)
+The PHP + Docker setup below still works as a local fallback.
 ### Requirements
 - Docker Desktop (or Docker Engine) with Docker Compose.
 
